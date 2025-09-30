@@ -1,0 +1,6 @@
+id,name,experience_years,tech_stack,available,location,visa_status,rating,email,phone,notes
+1,John Smith,5,"React,Node.js,MongoDB,AWS",true,San Francisco CA,H1B,EXCELLENT,john.smith@email.com,+1-555-0101,Strong full-stack developer with excellent communication skills
+2,Sarah Johnson,3,"Python,Django,PostgreSQL,Docker",true,Austin TX,GREEN_CARD,GOOD,sarah.johnson@email.com,+1-555-0102,Backend specialist with DevOps experience
+3,Mike Chen,7,"Java,Spring Boot,Kubernetes,Azure",false,Seattle WA,CITIZEN,EXCELLENT,mike.chen@email.com,+1-555-0103,Senior Java developer currently on assignment
+4,Emily Davis,2,"Vue.js,PHP,MySQL,AWS",true,Denver CO,OTHER,AVERAGE,emily.davis@email.com,+1-555-0104,Junior developer eager to learn and grow
+5,David Wilson,8,"Angular,C#,.NET,Azure,Docker",true,Chicago IL,H1B,EXCELLENT,david.wilson@email.com,+1-555-0105,Enterprise architect with strong leadership skills
