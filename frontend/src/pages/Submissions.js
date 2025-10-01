@@ -31,9 +31,7 @@ import {
   Upload as UploadIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+// Date picker imports removed as they're not used
 import { submissionAPI, consultantAPI } from '../api';
 
 const Submissions = ({ searchQuery }) => {
@@ -163,15 +161,7 @@ const Submissions = ({ searchQuery }) => {
     }
   };
 
-  const handleStatusUpdate = async (id, newStatus) => {
-    try {
-      await submissionAPI.updateStatus(id, newStatus, 'User', 'Status updated');
-      showSnackbar('Status updated successfully');
-      fetchSubmissions();
-    } catch (error) {
-      showSnackbar('Error updating status', 'error');
-    }
-  };
+  // handleStatusUpdate function removed as it's not used
 
   const handleImportCSV = async (event) => {
     const file = event.target.files[0];
@@ -256,8 +246,7 @@ const Submissions = ({ searchQuery }) => {
   ];
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box>
+    <Box>
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h4">Submissions</Typography>
           <Box>
@@ -345,19 +334,25 @@ const Submissions = ({ searchQuery }) => {
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={2}>
-                <DatePicker
+                <TextField
                   label="From Date"
-                  value={filters.date_from}
-                  onChange={(date) => setFilters({ ...filters, date_from: date })}
-                  slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                  type="date"
+                  value={filters.date_from ? filters.date_from.toISOString().split('T')[0] : ''}
+                  onChange={(e) => setFilters({ ...filters, date_from: e.target.value ? new Date(e.target.value) : null })}
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  fullWidth
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={2}>
-                <DatePicker
+                <TextField
                   label="To Date"
-                  value={filters.date_to}
-                  onChange={(date) => setFilters({ ...filters, date_to: date })}
-                  slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                  type="date"
+                  value={filters.date_to ? filters.date_to.toISOString().split('T')[0] : ''}
+                  onChange={(e) => setFilters({ ...filters, date_to: e.target.value ? new Date(e.target.value) : null })}
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  fullWidth
                 />
               </Grid>
             </Grid>
@@ -417,11 +412,13 @@ const Submissions = ({ searchQuery }) => {
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <DatePicker
+                <TextField
                   label="Submitted On"
-                  value={formData.submitted_on}
-                  onChange={(date) => setFormData({ ...formData, submitted_on: date })}
-                  slotProps={{ textField: { fullWidth: true } }}
+                  type="date"
+                  value={formData.submitted_on ? formData.submitted_on.toISOString().split('T')[0] : ''}
+                  onChange={(e) => setFormData({ ...formData, submitted_on: e.target.value ? new Date(e.target.value) : new Date() })}
+                  InputLabelProps={{ shrink: true }}
+                  fullWidth
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -475,7 +472,6 @@ const Submissions = ({ searchQuery }) => {
           </Alert>
         </Snackbar>
       </Box>
-    </LocalizationProvider>
   );
 };
 

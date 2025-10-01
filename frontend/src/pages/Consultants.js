@@ -16,8 +16,6 @@ import {
   Typography,
   Grid,
   Chip,
-  IconButton,
-  Tooltip,
   Alert,
   Snackbar,
 } from '@mui/material';
@@ -32,11 +30,8 @@ import {
   Delete as DeleteIcon,
   Upload as UploadIcon,
   Download as DownloadIcon,
-  Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+// Date picker imports removed as they're not used
 import { consultantAPI } from '../api';
 
 const Consultants = ({ searchQuery }) => {
@@ -250,8 +245,7 @@ const Consultants = ({ searchQuery }) => {
   ];
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box>
+    <Box>
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h4">Consultants</Typography>
           <Box>
@@ -507,7 +501,6 @@ const Consultants = ({ searchQuery }) => {
           </Alert>
         </Snackbar>
       </Box>
-    </LocalizationProvider>
   );
 };
 

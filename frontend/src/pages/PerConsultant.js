@@ -29,7 +29,7 @@ import {
   Schedule as ScheduleIcon,
   Cancel as CancelIcon,
 } from '@mui/icons-material';
-import { Timeline, TimelineItem, TimelineSeparator, TimelineConnector, TimelineContent, TimelineDot } from '@mui/lab';
+// Timeline components replaced with custom implementation
 import { submissionAPI, consultantAPI } from '../api';
 
 const PerConsultant = ({ searchQuery }) => {
@@ -127,20 +127,7 @@ const PerConsultant = ({ searchQuery }) => {
     });
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'JOINED':
-        return <CheckCircleIcon color="success" />;
-      case 'OFFER':
-        return <StarIcon color="primary" />;
-      case 'INTERVIEW':
-        return <ScheduleIcon color="secondary" />;
-      case 'REJECTED':
-        return <CancelIcon color="error" />;
-      default:
-        return <WorkIcon />;
-    }
-  };
+  // getStatusIcon function removed as it's not used
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -375,40 +362,41 @@ const PerConsultant = ({ searchQuery }) => {
                   {submissions.length === 0 ? (
                     <Alert severity="info">No submissions found for this consultant.</Alert>
                   ) : (
-                    <Timeline>
+                    <Box>
                       {submissions.map((submission, index) => (
-                        <TimelineItem key={submission.id}>
-                          <TimelineSeparator>
-                            <TimelineDot color={getStatusColor(submission.status)}>
-                              {getStatusIcon(submission.status)}
-                            </TimelineDot>
-                            {index < submissions.length - 1 && <TimelineConnector />}
-                          </TimelineSeparator>
-                          <TimelineContent>
+                        <Box key={submission.id} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Box sx={{ 
+                              width: 12, 
+                              height: 12, 
+                              borderRadius: '50%', 
+                              bgcolor: getStatusColor(submission.status),
+                              mr: 2 
+                            }} />
                             <Typography variant="h6" component="span">
                               {submission.client_or_job}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Submitted on: {new Date(submission.submitted_on).toLocaleDateString()}
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Submitted on: {new Date(submission.submitted_on).toLocaleDateString()}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Recruiter: {submission.recruiter}
+                          </Typography>
+                          <Chip 
+                            label={submission.status} 
+                            color={getStatusColor(submission.status)}
+                            size="small"
+                            sx={{ mt: 1 }}
+                          />
+                          {submission.comments && (
+                            <Typography variant="body2" sx={{ mt: 1 }}>
+                              {submission.comments}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Recruiter: {submission.recruiter}
-                            </Typography>
-                            <Chip 
-                              label={submission.status} 
-                              color={getStatusColor(submission.status)}
-                              size="small"
-                              sx={{ mt: 1 }}
-                            />
-                            {submission.comments && (
-                              <Typography variant="body2" sx={{ mt: 1 }}>
-                                {submission.comments}
-                              </Typography>
-                            )}
-                          </TimelineContent>
-                        </TimelineItem>
+                          )}
+                        </Box>
                       ))}
-                    </Timeline>
+                    </Box>
                   )}
                 </CardContent>
               </Card>

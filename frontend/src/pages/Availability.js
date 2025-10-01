@@ -6,19 +6,11 @@ import {
   Typography,
   Grid,
   Chip,
-  Button,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   IconButton,
   Tooltip,
   Switch,
@@ -26,17 +18,15 @@ import {
   Alert,
 } from '@mui/material';
 import {
-  Person as PersonIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
   Work as WorkIcon,
   Star as StarIcon,
   Add as AddIcon,
-  Edit as EditIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { consultantAPI, submissionAPI } from '../api';
+import { consultantAPI } from '../api';
 
 const Availability = ({ searchQuery }) => {
   const [consultants, setConsultants] = useState([]);

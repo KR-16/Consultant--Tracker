@@ -27,17 +27,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   ResponsiveContainer,
 } from 'recharts';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+// Date picker imports removed as they're not used
 import { Download as DownloadIcon } from '@mui/icons-material';
 import { reportsAPI, consultantAPI } from '../api';
 
@@ -53,7 +48,7 @@ const Reports = ({ searchQuery }) => {
   });
   const [consultants, setConsultants] = useState([]);
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  // COLORS constant removed as it's not used
 
   useEffect(() => {
     fetchConsultants();
@@ -116,8 +111,7 @@ const Reports = ({ searchQuery }) => {
   }
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box>
+    <Box>
         <Typography variant="h4" sx={{ mb: 3 }}>Reports & Analytics</Typography>
         
         {/* Filters */}
@@ -166,20 +160,26 @@ const Reports = ({ searchQuery }) => {
               </Grid>
               
               <Grid item xs={12} sm={6} md={2}>
-                <DatePicker
+                <TextField
                   label="From Date"
-                  value={filters.date_from}
-                  onChange={(date) => setFilters({ ...filters, date_from: date })}
-                  slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                  type="date"
+                  value={filters.date_from ? filters.date_from.toISOString().split('T')[0] : ''}
+                  onChange={(e) => setFilters({ ...filters, date_from: e.target.value ? new Date(e.target.value) : null })}
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  fullWidth
                 />
               </Grid>
               
               <Grid item xs={12} sm={6} md={2}>
-                <DatePicker
+                <TextField
                   label="To Date"
-                  value={filters.date_to}
-                  onChange={(date) => setFilters({ ...filters, date_to: date })}
-                  slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                  type="date"
+                  value={filters.date_to ? filters.date_to.toISOString().split('T')[0] : ''}
+                  onChange={(e) => setFilters({ ...filters, date_to: e.target.value ? new Date(e.target.value) : null })}
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  fullWidth
                 />
               </Grid>
               
@@ -347,7 +347,6 @@ const Reports = ({ searchQuery }) => {
           </Grid>
         )}
       </Box>
-    </LocalizationProvider>
   );
 };
 
