@@ -47,12 +47,17 @@ async def get_consultants(
     repo: ConsultantRepository = Depends(get_consultant_repository)
 ):
     """Get all consultants with optional filters"""
+    # Convert empty strings to None for enum fields
+    visa_status_filter = visa_status if visa_status and visa_status.strip() else None
+    rating_filter = rating if rating and rating.strip() else None
+    location_filter = location if location and location.strip() else None
+    
     filters = ConsultantFilters(
         tech_stack=tech_stack,
         available=available,
-        location=location,
-        visa_status=visa_status,
-        rating=rating,
+        location=location_filter,
+        visa_status=visa_status_filter,
+        rating=rating_filter,
         experience_min=experience_min,
         experience_max=experience_max
     )

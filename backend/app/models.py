@@ -34,7 +34,7 @@ class ConsultantBase(BaseModel):
     visa_status: VisaStatus
     rating: Rating
     email: EmailStr
-    phone: str = Field(..., regex=r'^\+?1?\d{9,15}$')
+    phone: str = Field(..., pattern=r'^\+?1?\d{9,15}$')
     notes: Optional[str] = None
 
 class ConsultantCreate(ConsultantBase):
@@ -49,7 +49,7 @@ class ConsultantUpdate(BaseModel):
     visa_status: Optional[VisaStatus] = None
     rating: Optional[Rating] = None
     email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, regex=r'^\+?1?\d{9,15}$')
+    phone: Optional[str] = Field(None, pattern=r'^\+?1?\d{9,15}$')
     notes: Optional[str] = None
 
 class Consultant(ConsultantBase):

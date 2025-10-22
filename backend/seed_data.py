@@ -23,7 +23,7 @@ async def seed_data():
             "visa_status": "H1B",
             "rating": "EXCELLENT",
             "email": "john.smith@email.com",
-            "phone": "+1-555-0101",
+            "phone": "+1555010101",
             "notes": "Strong full-stack developer with excellent communication skills"
         },
         {
@@ -35,7 +35,7 @@ async def seed_data():
             "visa_status": "GREEN_CARD",
             "rating": "GOOD",
             "email": "sarah.johnson@email.com",
-            "phone": "+1-555-0102",
+            "phone": "+1555010102",
             "notes": "Backend specialist with DevOps experience"
         },
         {
@@ -47,7 +47,7 @@ async def seed_data():
             "visa_status": "CITIZEN",
             "rating": "EXCELLENT",
             "email": "mike.chen@email.com",
-            "phone": "+1-555-0103",
+            "phone": "+1555010103",
             "notes": "Senior Java developer, currently on assignment"
         },
         {
@@ -59,7 +59,7 @@ async def seed_data():
             "visa_status": "OTHER",
             "rating": "AVERAGE",
             "email": "emily.davis@email.com",
-            "phone": "+1-555-0104",
+            "phone": "+1555010104",
             "notes": "Junior developer, eager to learn and grow"
         },
         {
@@ -71,7 +71,7 @@ async def seed_data():
             "visa_status": "H1B",
             "rating": "EXCELLENT",
             "email": "david.wilson@email.com",
-            "phone": "+1-555-0105",
+            "phone": "+1555010105",
             "notes": "Enterprise architect with strong leadership skills"
         }
     ]
