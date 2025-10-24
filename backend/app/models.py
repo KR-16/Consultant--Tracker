@@ -160,3 +160,190 @@ class TimeToStageReport(BaseModel):
     to_stage: str
     avg_days: float
     count: int
+
+# Authentication and User Models
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    RECRUITER = "RECRUITER"
+    CONSULTANT = "CONSULTANT"
+
+class UserBase(BaseModel):
+    email: EmailStr
+    name: str = Field(..., min_length=1, max_length=100)
+    role: UserRole
+    is_active: bool = True
+
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=6)
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+
+class User(UserBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+    hashed_password: str
+
+    class Config:
+        from_attributes = True
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+# Job Description Models
+class JobStatus(str, Enum):
+    OPEN = "OPEN"
+    IN_PROGRESS = "IN_PROGRESS"
+    CLOSED = "CLOSED"
+    FILLED = "FILLED"
+
+class JobDescriptionBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    company: str = Field(..., min_length=1, max_length=100)
+    location: str = Field(..., min_length=1, max_length=100)
+    description: str = Field(..., min_length=1)
+    requirements: List[str] = Field(default_factory=list)
+    tech_stack: List[str] = Field(default_factory=list)
+    experience_years: int = Field(..., ge=0, le=50)
+    salary_range: Optional[str] = None
+    employment_type: str = Field(default="FULL_TIME")  # FULL_TIME, PART_TIME, CONTRACT
+    status: JobStatus = JobStatus.OPEN
+    recruiter_id: str = Field(..., min_length=1)
+
+class JobDescriptionCreate(JobDescriptionBase):
+    pass
+
+class JobDescriptionUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    company: Optional[str] = Field(None, min_length=1, max_length=100)
+    location: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, min_length=1)
+    requirements: Optional[List[str]] = None
+    tech_stack: Optional[List[str]] = None
+    experience_years: Optional[int] = Field(None, ge=0, le=50)
+    salary_range: Optional[str] = None
+    employment_type: Optional[str] = None
+    status: Optional[JobStatus] = None
+
+class JobDescription(JobDescriptionBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Application Models (Consultant applying to jobs)
+class ApplicationStatus(str, Enum):
+    APPLIED = "APPLIED"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    INTERVIEW_SCHEDULED = "INTERVIEW_SCHEDULED"
+    INTERVIEWED = "INTERVIEWED"
+    OFFERED = "OFFERED"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    WITHDRAWN = "WITHDRAWN"
+
+class ApplicationBase(BaseModel):
+    job_id: str = Field(..., min_length=1)
+    consultant_id: str = Field(..., min_length=1)
+    status: ApplicationStatus = ApplicationStatus.APPLIED
+    resume_path: Optional[str] = None
+    cover_letter: Optional[str] = None
+    applied_at: datetime = Field(default_factory=datetime.now)
+
+class ApplicationCreate(ApplicationBase):
+    pass
+
+class ApplicationUpdate(BaseModel):
+    status: Optional[ApplicationStatus] = None
+    resume_path: Optional[str] = None
+    cover_letter: Optional[str] = None
+
+class Application(ApplicationBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Interview and Update Models
+class InterviewType(str, Enum):
+    PHONE = "PHONE"
+    VIDEO = "VIDEO"
+    IN_PERSON = "IN_PERSON"
+    TECHNICAL = "TECHNICAL"
+    HR = "HR"
+    MANAGER = "MANAGER"
+
+class InterviewBase(BaseModel):
+    application_id: str = Field(..., min_length=1)
+    interview_type: InterviewType
+    scheduled_at: datetime
+    duration_minutes: int = Field(..., ge=15, le=480)
+    interviewer: str = Field(..., min_length=1, max_length=100)
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    questions_asked: List[str] = Field(default_factory=list)
+    feedback: Optional[str] = None
+    rating: Optional[int] = Field(None, ge=1, le=5)
+
+class InterviewCreate(InterviewBase):
+    pass
+
+class InterviewUpdate(BaseModel):
+    interview_type: Optional[InterviewType] = None
+    scheduled_at: Optional[datetime] = None
+    duration_minutes: Optional[int] = Field(None, ge=15, le=480)
+    interviewer: Optional[str] = Field(None, min_length=1, max_length=100)
+    location: Optional[str] = None
+    notes: Optional[str] = None
+    questions_asked: Optional[List[str]] = None
+    feedback: Optional[str] = None
+    rating: Optional[int] = Field(None, ge=1, le=5)
+
+class Interview(InterviewBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Status Update Models
+class StatusUpdateType(str, Enum):
+    RTR = "RTR"  # Ready to Roll
+    VENDOR_CALL = "VENDOR_CALL"
+    CLIENT_FEEDBACK = "CLIENT_FEEDBACK"
+    INTERVIEW_FEEDBACK = "INTERVIEW_FEEDBACK"
+    GENERAL_UPDATE = "GENERAL_UPDATE"
+
+class StatusUpdateBase(BaseModel):
+    application_id: str = Field(..., min_length=1)
+    update_type: StatusUpdateType
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(..., min_length=1)
+    updated_by: str = Field(..., min_length=1)  # User ID who made the update
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+class StatusUpdateCreate(StatusUpdateBase):
+    pass
+
+class StatusUpdate(StatusUpdateBase):
+    id: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
