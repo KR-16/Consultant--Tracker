@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import motor.motor_asyncio
 from app.db import init_db
-from app.routers import consultants, submissions, reports, auth, job_descriptions, applications
+from app.routers import consultants, submissions, reports
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,12 +30,9 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(auth.router, prefix="/api", tags=["authentication"])
 app.include_router(consultants.router, prefix="/api/consultants", tags=["consultants"])
 app.include_router(submissions.router, prefix="/api/submissions", tags=["submissions"])
 app.include_router(reports.router, prefix="/api/reports", tags=["reports"])
-app.include_router(job_descriptions.router, prefix="/api", tags=["job-descriptions"])
-app.include_router(applications.router, prefix="/api", tags=["applications"])
 
 @app.get("/")
 async def root():
