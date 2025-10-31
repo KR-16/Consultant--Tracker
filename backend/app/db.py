@@ -41,36 +41,6 @@ async def create_indexes():
     # Status history collection indexes
     await db.database.status_history.create_index("submission_id")
     await db.database.status_history.create_index("changed_at")
-    
-    # Users collection indexes
-    await db.database.users.create_index("email", unique=True)
-    await db.database.users.create_index("role")
-    await db.database.users.create_index("is_active")
-    
-    # Job descriptions collection indexes
-    await db.database.job_descriptions.create_index("recruiter_id")
-    await db.database.job_descriptions.create_index("status")
-    await db.database.job_descriptions.create_index("tech_stack")
-    await db.database.job_descriptions.create_index("company")
-    await db.database.job_descriptions.create_index("location")
-    await db.database.job_descriptions.create_index("created_at")
-    
-    # Applications collection indexes
-    await db.database.applications.create_index("job_id")
-    await db.database.applications.create_index("consultant_id")
-    await db.database.applications.create_index("status")
-    await db.database.applications.create_index("applied_at")
-    await db.database.applications.create_index([("job_id", 1), ("consultant_id", 1)], unique=True)
-    
-    # Interviews collection indexes
-    await db.database.interviews.create_index("application_id")
-    await db.database.interviews.create_index("scheduled_at")
-    await db.database.interviews.create_index("interview_type")
-    
-    # Status updates collection indexes
-    await db.database.status_updates.create_index("application_id")
-    await db.database.status_updates.create_index("updated_at")
-    await db.database.status_updates.create_index("update_type")
 
 async def close_db():
     """Close database connection"""
