@@ -1,136 +1,162 @@
-import React, { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
   Typography,
   Container,
-  Tabs,
-  Tab,
   Box,
-  IconButton,
+  Button,
+  Avatar,
   Menu,
   MenuItem,
-  TextField,
-  InputAdornment,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Download as DownloadIcon,
-  Upload as UploadIcon,
-  MoreVert as MoreVertIcon,
-} from '@mui/icons-material';
-import Consultants from './pages/Consultants';
-import Submissions from './pages/Submissions';
-import PerConsultant from './pages/PerConsultant';
-import Availability from './pages/Availability';
-import Reports from './pages/Reports';
+import { ExitToApp as LogoutIcon } from '@mui/icons-material';
+import { useAuth } from './contexts/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
+
+// Simple Dashboard component
+const Dashboard = () => {
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
+  };
+
+  return (
+    <Container maxWidth="md" sx={{ mt: 4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 3,
+        }}
+      >
+        <Typography variant="h4" component="h1" gutterBottom>
+          Welcome, {user?.name}!
+        </Typography>
+        <Box
+          sx={{
+            p: 3,
+            border: '1px solid #e0e0e0',
+            borderRadius: 2,
+            width: '100%',
+            maxWidth: 500,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>
+            User Information
+          </Typography>
+          <Typography variant="body1">
+            <strong>Email:</strong> {user?.email}
+          </Typography>
+          <Typography variant="body1">
+            <strong>Role:</strong> {user?.role}
+          </Typography>
+          <Typography variant="body1">
+            <strong>Status:</strong> {user?.is_active ? 'Active' : 'Inactive'}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          color="error"
+          startIcon={<LogoutIcon />}
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
+      </Box>
+    </Container>
+  );
+};
 
 function App() {
-  const [currentTab, setCurrentTab] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [anchorEl, setAnchorEl] = useState(null);
+  const { isAuthenticated, user, logout } = useAuth();
+  const [userMenuAnchor, setUserMenuAnchor] = React.useState(null);
 
-  const handleTabChange = (event, newValue) => {
-    setCurrentTab(newValue);
+  const handleUserMenuOpen = (event) => {
+    setUserMenuAnchor(event.currentTarget);
   };
 
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleUserMenuClose = () => {
+    setUserMenuAnchor(null);
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
+  const handleLogout = () => {
+    logout();
+    handleUserMenuClose();
+    window.location.href = '/login';
   };
 
-  const handleExport = () => {
-    // Export functionality will be implemented in individual pages
-    handleMenuClose();
-  };
-
-  const handleImport = () => {
-    // Import functionality will be implemented in individual pages
-    handleMenuClose();
-  };
-
-  const tabRoutes = [
-    { path: '/', component: Consultants, label: 'Consultants' },
-    { path: '/submissions', component: Submissions, label: 'Submissions' },
-    { path: '/per-consultant', component: PerConsultant, label: 'Per-Consultant' },
-    { path: '/availability', component: Availability, label: 'Availability' },
-    { path: '/reports', component: Reports, label: 'Reports' },
-  ];
+  // If not authenticated, show login/register routes
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Consultant Tracker
+            Consultant Tracker - Authentication
           </Typography>
-          
-          <TextField
-            size="small"
-            placeholder="Search consultants..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ mr: 2, minWidth: 200 }}
-          />
-          
-          <IconButton
-            color="inherit"
-            onClick={handleMenuOpen}
-          >
-            <MoreVertIcon />
-          </IconButton>
-          
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
+              {user?.name} ({user?.role})
+            </Typography>
+            <Button
+              color="inherit"
+              onClick={handleUserMenuOpen}
+              sx={{ minWidth: 'auto', p: 0.5 }}
+            >
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </Avatar>
+            </Button>
+          </Box>
+
           <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
+            anchorEl={userMenuAnchor}
+            open={Boolean(userMenuAnchor)}
+            onClose={handleUserMenuClose}
           >
-            <MenuItem onClick={handleExport}>
-              <DownloadIcon sx={{ mr: 1 }} />
-              Export Data
+            <MenuItem disabled>
+              <Typography variant="body2">
+                Role: {user?.role}
+              </Typography>
             </MenuItem>
-            <MenuItem onClick={handleImport}>
-              <UploadIcon sx={{ mr: 1 }} />
-              Import Data
+            <MenuItem onClick={handleLogout}>
+              <LogoutIcon sx={{ mr: 1, fontSize: 20 }} />
+              Logout
             </MenuItem>
           </Menu>
         </Toolbar>
-        
-        <Tabs
-          value={currentTab}
-          onChange={handleTabChange}
-          indicatorColor="secondary"
-          textColor="inherit"
-          variant="fullWidth"
-        >
-          {tabRoutes.map((route, index) => (
-            <Tab key={index} label={route.label} />
-          ))}
-        </Tabs>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
-        <Routes>
-          {tabRoutes.map((route, index) => (
-            <Route
-              key={index}
-              path={route.path}
-              element={<route.component searchQuery={searchQuery} />}
-            />
-          ))}
-        </Routes>
-      </Container>
+      <Routes>
+        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/register" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
     </Box>
   );
 }

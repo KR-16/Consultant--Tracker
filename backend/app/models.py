@@ -1,185 +1,123 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
 from enum import Enum
+import logging
 
-class VisaStatus(str, Enum):
-    H1B = "H1B"
-    GREEN_CARD = "GREEN_CARD"
-    CITIZEN = "CITIZEN"
-    OTHER = "OTHER"
-
-class Rating(str, Enum):
-    EXCELLENT = "EXCELLENT"
-    GOOD = "GOOD"
-    AVERAGE = "AVERAGE"
-    POOR = "POOR"
-
-class SubmissionStatus(str, Enum):
-    SUBMITTED = "SUBMITTED"
-    INTERVIEW = "INTERVIEW"
-    OFFER = "OFFER"
-    JOINED = "JOINED"
-    REJECTED = "REJECTED"
-    ON_HOLD = "ON_HOLD"
-    WITHDRAWN = "WITHDRAWN"
-
-# Consultant Models
-class ConsultantBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100)
-    experience_years: int = Field(..., ge=0, le=50)
-    tech_stack: List[str] = Field(default_factory=list)
-    available: bool = True
-    location: str = Field(..., min_length=1, max_length=100)
-    visa_status: VisaStatus
-    rating: Rating
-    email: EmailStr
-    phone: str = Field(..., pattern=r'^\+?1?\d{9,15}$')
-    notes: Optional[str] = None
-
-class ConsultantCreate(ConsultantBase):
-    pass
-
-class ConsultantUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    experience_years: Optional[int] = Field(None, ge=0, le=50)
-    tech_stack: Optional[List[str]] = None
-    available: Optional[bool] = None
-    location: Optional[str] = Field(None, min_length=1, max_length=100)
-    visa_status: Optional[VisaStatus] = None
-    rating: Optional[Rating] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = Field(None, pattern=r'^\+?1?\d{9,15}$')
-    notes: Optional[str] = None
-
-class Consultant(ConsultantBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-# Submission Models
-class SubmissionBase(BaseModel):
-    consultant_id: str = Field(..., min_length=1)
-    client_or_job: str = Field(..., min_length=1, max_length=200)
-    recruiter: str = Field(..., min_length=1, max_length=100)
-    submitted_on: datetime
-    status: SubmissionStatus = SubmissionStatus.SUBMITTED
-    comments: Optional[str] = None
-    attachment_path: Optional[str] = None
-
-    @validator('submitted_on')
-    def validate_submitted_on(cls, v):
-        if v > datetime.now():
-            raise ValueError('submitted_on cannot be in the future')
-        return v
-
-class SubmissionCreate(SubmissionBase):
-    pass
-
-class SubmissionUpdate(BaseModel):
-    client_or_job: Optional[str] = Field(None, min_length=1, max_length=200)
-    recruiter: Optional[str] = Field(None, min_length=1, max_length=100)
-    submitted_on: Optional[datetime] = None
-    status: Optional[SubmissionStatus] = None
-    comments: Optional[str] = None
-    attachment_path: Optional[str] = None
-
-class Submission(SubmissionBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class SubmissionStatusUpdate(BaseModel):
-    status: SubmissionStatus
-    comments: Optional[str] = None
-
-# Status History Model
-class StatusHistory(BaseModel):
-    id: str
-    submission_id: str
-    old_status: Optional[SubmissionStatus]
-    new_status: SubmissionStatus
-    changed_at: datetime
-    changed_by: str
-    comments: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-# Filter Models
-class ConsultantFilters(BaseModel):
-    tech_stack: Optional[List[str]] = None
-    available: Optional[bool] = None
-    location: Optional[str] = None
-    visa_status: Optional[VisaStatus] = None
-    rating: Optional[Rating] = None
-    experience_min: Optional[int] = Field(None, ge=0)
-    experience_max: Optional[int] = Field(None, le=50)
-
-class SubmissionFilters(BaseModel):
-    consultant_id: Optional[str] = None
-    recruiter: Optional[str] = None
-    status: Optional[SubmissionStatus] = None
-    tech_stack: Optional[List[str]] = None
-    client_or_job: Optional[str] = None
-    date_from: Optional[datetime] = None
-    date_to: Optional[datetime] = None
-
-# Report Models
-class StatusReport(BaseModel):
-    status: SubmissionStatus
-    count: int
-    percentage: float
-
-class TechReport(BaseModel):
-    tech: str
-    count: int
-    percentage: float
-
-class RecruiterReport(BaseModel):
-    recruiter: str
-    total_submissions: int
-    interviews: int
-    offers: int
-    joined: int
-    win_rate: float
-
-class FunnelReport(BaseModel):
-    stage: str
-    count: int
-    conversion_rate: float
-
-class TimeToStageReport(BaseModel):
-    from_stage: str
-    to_stage: str
-    avg_days: float
-    count: int
+# Set up logger
+logger = logging.getLogger(__name__)
 
 # Authentication and User Models
 class UserRole(str, Enum):
     ADMIN = "ADMIN"
     RECRUITER = "RECRUITER"
     CONSULTANT = "CONSULTANT"
+    
+    def __str__(self):
+        return self.value
+    
+    @classmethod
+    def _missing_(cls, value):
+        logger.warning(f"Invalid UserRole value: {value}")
+        return None
 
 class UserBase(BaseModel):
     email: EmailStr
     name: str = Field(..., min_length=1, max_length=100)
     role: UserRole
     is_active: bool = True
+    
+    def __init__(self, **data):
+        """Initialize UserBase with logging"""
+        logger.debug(f"Initializing UserBase - email: {data.get('email', 'N/A')}, role: {data.get('role', 'N/A')}")
+        try:
+            super().__init__(**data)
+            logger.debug(f"UserBase initialized successfully - email: {self.email}, role: {self.role}")
+        except Exception as e:
+            logger.error(f"Error initializing UserBase: {str(e)}", exc_info=True)
+            raise
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=6, description="Password must be at least 6 characters and maximum 72 bytes (bcrypt limitation)")
+    
+    @validator('password')
+    def validate_password_length(cls, v):
+        """Ensure password doesn't exceed 72 bytes (not just characters)"""
+        logger.debug("Validating password length")
+        
+        try:
+            # Step 1: Check if password is provided
+            logger.debug("Step 1: Checking if password is provided")
+            if not v:
+                logger.warning("Password validation failed: Password is required")
+                raise ValueError("Password is required")
+            logger.debug("Password is provided")
+            
+            # Step 2: Encode password to bytes
+            logger.debug("Step 2: Encoding password to UTF-8 bytes")
+            try:
+                password_bytes = v.encode('utf-8')
+                byte_count = len(password_bytes)
+                logger.debug(f"Password byte count: {byte_count} bytes")
+            except UnicodeEncodeError as e:
+                logger.error(f"Unicode encoding error during password validation: {str(e)}", exc_info=True)
+                raise ValueError(f"Password encoding error: {str(e)}")
+            except Exception as e:
+                logger.error(f"Unexpected error encoding password: {str(e)}", exc_info=True)
+                raise ValueError(f"Password validation error: {str(e)}")
+            
+            # Step 3: Check byte length
+            logger.debug(f"Step 3: Checking password byte length ({byte_count} bytes)")
+            if byte_count > 72:
+                logger.warning(f"Password validation failed: Password too long ({byte_count} bytes, max 72)")
+                raise ValueError(
+                    f"Password is too long ({byte_count} bytes). "
+                    f"Maximum 72 bytes allowed. "
+                    f"For ASCII characters, this is approximately 72 characters. "
+                    f"Some special characters or emojis use multiple bytes per character."
+                )
+            
+            # Step 4: Check minimum length (character count)
+            logger.debug(f"Step 4: Checking password character length ({len(v)} characters)")
+            if len(v) < 6:
+                logger.warning(f"Password validation failed: Password too short ({len(v)} characters, min 6)")
+                raise ValueError("Password must be at least 6 characters")
+            
+            logger.debug(f"Password validation successful - {byte_count} bytes, {len(v)} characters")
+            return v
+            
+        except ValueError as e:
+            # Re-raise ValueError as-is (validation errors)
+            logger.warning(f"Password validation error: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error during password validation: {str(e)}", exc_info=True)
+            raise ValueError(f"Password validation failed: {str(e)}")
+    
+    def __init__(self, **data):
+        """Initialize UserCreate with logging"""
+        logger.debug(f"Initializing UserCreate - email: {data.get('email', 'N/A')}, role: {data.get('role', 'N/A')}")
+        try:
+            super().__init__(**data)
+            logger.info(f"UserCreate initialized successfully - email: {self.email}, role: {self.role}")
+        except Exception as e:
+            logger.error(f"Error initializing UserCreate: {str(e)}", exc_info=True)
+            raise
 
 class UserUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
+    
+    def __init__(self, **data):
+        """Initialize UserUpdate with logging"""
+        logger.debug(f"Initializing UserUpdate with fields: {list(data.keys())}")
+        try:
+            super().__init__(**data)
+            logger.debug(f"UserUpdate initialized successfully with {len([k for k, v in data.items() if v is not None])} fields")
+        except Exception as e:
+            logger.error(f"Error initializing UserUpdate: {str(e)}", exc_info=True)
+            raise
 
 class User(UserBase):
     id: str
@@ -189,161 +127,127 @@ class User(UserBase):
 
     class Config:
         from_attributes = True
+    
+    def __init__(self, **data):
+        """Initialize User with logging"""
+        user_id = data.get('id', 'N/A')
+        email = data.get('email', 'N/A')
+        logger.debug(f"Initializing User - ID: {user_id}, email: {email}")
+        try:
+            super().__init__(**data)
+            logger.debug(f"User initialized successfully - ID: {self.id}, email: {self.email}, role: {self.role}")
+        except Exception as e:
+            logger.error(f"Error initializing User: {str(e)}", exc_info=True)
+            raise
+    
+    @validator('id')
+    def validate_id(cls, v):
+        """Validate user ID"""
+        logger.debug(f"Validating user ID: {v}")
+        if not v or not v.strip():
+            logger.warning("User ID validation failed: ID is required")
+            raise ValueError("User ID is required")
+        logger.debug("User ID validation successful")
+        return v
+    
+    @validator('created_at', 'updated_at')
+    def validate_datetime(cls, v):
+        """Validate datetime fields"""
+        logger.debug(f"Validating datetime: {v}")
+        if not isinstance(v, datetime):
+            logger.warning(f"Datetime validation failed: Expected datetime, got {type(v)}")
+            raise ValueError(f"Expected datetime, got {type(v)}")
+        logger.debug("Datetime validation successful")
+        return v
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., description="Password")
+    
+    def __init__(self, **data):
+        """Initialize UserLogin with logging"""
+        email = data.get('email', 'N/A')
+        logger.debug(f"Initializing UserLogin - email: {email}")
+        try:
+            super().__init__(**data)
+            logger.debug(f"UserLogin initialized successfully - email: {self.email}")
+        except Exception as e:
+            logger.error(f"Error initializing UserLogin: {str(e)}", exc_info=True)
+            raise
+    
+    @validator('password')
+    def validate_password_present(cls, v):
+        """Validate that password is provided"""
+        logger.debug("Validating password presence for login")
+        if not v or not v.strip():
+            logger.warning("Login password validation failed: Password is required")
+            raise ValueError("Password is required")
+        logger.debug("Login password validation successful")
+        return v
 
 class Token(BaseModel):
     access_token: str
     token_type: str
+    
+    def __init__(self, **data):
+        """Initialize Token with logging"""
+        logger.debug("Initializing Token")
+        try:
+            super().__init__(**data)
+            logger.debug(f"Token initialized successfully - token_type: {self.token_type}")
+        except Exception as e:
+            logger.error(f"Error initializing Token: {str(e)}", exc_info=True)
+            raise
+    
+    @validator('access_token')
+    def validate_access_token(cls, v):
+        """Validate access token"""
+        logger.debug("Validating access token")
+        if not v or not v.strip():
+            logger.warning("Access token validation failed: Token is required")
+            raise ValueError("Access token is required")
+        logger.debug("Access token validation successful")
+        return v
+    
+    @validator('token_type')
+    def validate_token_type(cls, v):
+        """Validate token type"""
+        logger.debug(f"Validating token type: {v}")
+        if not v or not v.strip():
+            logger.warning("Token type validation failed: Token type is required")
+            raise ValueError("Token type is required")
+        expected_type = "bearer"
+        if v.lower() != expected_type:
+            logger.warning(f"Token type validation warning: Expected '{expected_type}', got '{v}'")
+        logger.debug("Token type validation successful")
+        return v
 
 class TokenData(BaseModel):
     email: Optional[str] = None
-
-# Job Description Models
-class JobStatus(str, Enum):
-    OPEN = "OPEN"
-    IN_PROGRESS = "IN_PROGRESS"
-    CLOSED = "CLOSED"
-    FILLED = "FILLED"
-
-class JobDescriptionBase(BaseModel):
-    title: str = Field(..., min_length=1, max_length=200)
-    company: str = Field(..., min_length=1, max_length=100)
-    location: str = Field(..., min_length=1, max_length=100)
-    description: str = Field(..., min_length=1)
-    requirements: List[str] = Field(default_factory=list)
-    tech_stack: List[str] = Field(default_factory=list)
-    experience_years: int = Field(..., ge=0, le=50)
-    salary_range: Optional[str] = None
-    employment_type: str = Field(default="FULL_TIME")  # FULL_TIME, PART_TIME, CONTRACT
-    status: JobStatus = JobStatus.OPEN
-    recruiter_id: str = Field(..., min_length=1)
-
-class JobDescriptionCreate(JobDescriptionBase):
-    pass
-
-class JobDescriptionUpdate(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=200)
-    company: Optional[str] = Field(None, min_length=1, max_length=100)
-    location: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = Field(None, min_length=1)
-    requirements: Optional[List[str]] = None
-    tech_stack: Optional[List[str]] = None
-    experience_years: Optional[int] = Field(None, ge=0, le=50)
-    salary_range: Optional[str] = None
-    employment_type: Optional[str] = None
-    status: Optional[JobStatus] = None
-
-class JobDescription(JobDescriptionBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-# Application Models (Consultant applying to jobs)
-class ApplicationStatus(str, Enum):
-    APPLIED = "APPLIED"
-    UNDER_REVIEW = "UNDER_REVIEW"
-    INTERVIEW_SCHEDULED = "INTERVIEW_SCHEDULED"
-    INTERVIEWED = "INTERVIEWED"
-    OFFERED = "OFFERED"
-    ACCEPTED = "ACCEPTED"
-    REJECTED = "REJECTED"
-    WITHDRAWN = "WITHDRAWN"
-
-class ApplicationBase(BaseModel):
-    job_id: str = Field(..., min_length=1)
-    consultant_id: str = Field(..., min_length=1)
-    status: ApplicationStatus = ApplicationStatus.APPLIED
-    resume_path: Optional[str] = None
-    cover_letter: Optional[str] = None
-    applied_at: datetime = Field(default_factory=datetime.now)
-
-class ApplicationCreate(ApplicationBase):
-    pass
-
-class ApplicationUpdate(BaseModel):
-    status: Optional[ApplicationStatus] = None
-    resume_path: Optional[str] = None
-    cover_letter: Optional[str] = None
-
-class Application(ApplicationBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-# Interview and Update Models
-class InterviewType(str, Enum):
-    PHONE = "PHONE"
-    VIDEO = "VIDEO"
-    IN_PERSON = "IN_PERSON"
-    TECHNICAL = "TECHNICAL"
-    HR = "HR"
-    MANAGER = "MANAGER"
-
-class InterviewBase(BaseModel):
-    application_id: str = Field(..., min_length=1)
-    interview_type: InterviewType
-    scheduled_at: datetime
-    duration_minutes: int = Field(..., ge=15, le=480)
-    interviewer: str = Field(..., min_length=1, max_length=100)
-    location: Optional[str] = None
-    notes: Optional[str] = None
-    questions_asked: List[str] = Field(default_factory=list)
-    feedback: Optional[str] = None
-    rating: Optional[int] = Field(None, ge=1, le=5)
-
-class InterviewCreate(InterviewBase):
-    pass
-
-class InterviewUpdate(BaseModel):
-    interview_type: Optional[InterviewType] = None
-    scheduled_at: Optional[datetime] = None
-    duration_minutes: Optional[int] = Field(None, ge=15, le=480)
-    interviewer: Optional[str] = Field(None, min_length=1, max_length=100)
-    location: Optional[str] = None
-    notes: Optional[str] = None
-    questions_asked: Optional[List[str]] = None
-    feedback: Optional[str] = None
-    rating: Optional[int] = Field(None, ge=1, le=5)
-
-class Interview(InterviewBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-# Status Update Models
-class StatusUpdateType(str, Enum):
-    RTR = "RTR"  # Ready to Roll
-    VENDOR_CALL = "VENDOR_CALL"
-    CLIENT_FEEDBACK = "CLIENT_FEEDBACK"
-    INTERVIEW_FEEDBACK = "INTERVIEW_FEEDBACK"
-    GENERAL_UPDATE = "GENERAL_UPDATE"
-
-class StatusUpdateBase(BaseModel):
-    application_id: str = Field(..., min_length=1)
-    update_type: StatusUpdateType
-    title: str = Field(..., min_length=1, max_length=200)
-    description: str = Field(..., min_length=1)
-    updated_by: str = Field(..., min_length=1)  # User ID who made the update
-    updated_at: datetime = Field(default_factory=datetime.now)
-
-class StatusUpdateCreate(StatusUpdateBase):
-    pass
-
-class StatusUpdate(StatusUpdateBase):
-    id: str
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
+    
+    def __init__(self, **data):
+        """Initialize TokenData with logging"""
+        email = data.get('email', 'N/A')
+        logger.debug(f"Initializing TokenData - email: {email}")
+        try:
+            super().__init__(**data)
+            logger.debug(f"TokenData initialized successfully - email: {self.email}")
+        except Exception as e:
+            logger.error(f"Error initializing TokenData: {str(e)}", exc_info=True)
+            raise
+    
+    @validator('email')
+    def validate_email_format(cls, v):
+        """Validate email format if provided"""
+        if v is not None:
+            logger.debug(f"Validating email format: {v}")
+            if not v or not v.strip():
+                logger.warning("Email validation failed: Email cannot be empty if provided")
+                raise ValueError("Email cannot be empty if provided")
+            if '@' not in v:
+                logger.warning(f"Email validation failed: Invalid email format: {v}")
+                raise ValueError("Invalid email format")
+            logger.debug("Email validation successful")
+        else:
+            logger.debug("Email is None - skipping validation")
+        return v

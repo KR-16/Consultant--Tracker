@@ -1,365 +1,186 @@
-# Consultant Tracker
+# Consultant Tracker - Authentication System
 
-A comprehensive full-stack application for managing consultants and job submissions, built with FastAPI + MongoDB backend and React + Material-UI frontend.
+A simple authentication system with registration and login functionality for three user roles: **Admin**, **Recruiter**, and **Consultant**.
 
-## 🚀 Features
-
-### Core Functionality
-- **Consultant Management**: CRUD operations for consultant profiles
-- **Submission Tracking**: Track job submissions with status updates
-- **Per-Consultant Analytics**: Individual consultant performance metrics
-- **Availability Management**: Filter and manage consultant availability
-- **Comprehensive Reports**: Analytics and insights with charts
-- **CSV Import/Export**: Bulk data operations
-- **Real-time Status Updates**: Track submission pipeline progress
-
-### Technical Features
-- **Clean Architecture**: Modular backend with repositories and services
-- **Data Validation**: Pydantic models with comprehensive validation
-- **Database Indexing**: Optimized MongoDB queries with proper indexes
-- **Responsive UI**: Material-UI components with modern design
-- **Docker Support**: Complete containerization with Docker Compose
-- **API Documentation**: Auto-generated FastAPI docs
-- **Unit Tests**: Comprehensive test coverage for backend services
-
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Backend
-- **FastAPI**: Modern Python web framework
-- **MongoDB**: NoSQL database with Motor async driver
-- **Pydantic**: Data validation and serialization
-- **Uvicorn**: ASGI server for production deployment
+- **FastAPI** - Python web framework
+- **MongoDB** - NoSQL database
+- **Motor** - Async MongoDB driver
+- **JWT** - Token-based authentication
+- **Bcrypt** - Password hashing
+- **Pydantic** - Data validation
 
 ### Frontend
-- **React**: Modern JavaScript library
-- **Material-UI (MUI)**: React component library
-- **Recharts**: Chart library for data visualization
-- **Axios**: HTTP client for API communication
-- **React Router**: Client-side routing
+- **React** - UI library
+- **Material-UI (MUI)** - Component library
+- **React Router** - Routing
+- **Axios** - HTTP client
 
-### Infrastructure
-- **Docker**: Containerization
-- **Docker Compose**: Multi-container orchestration
-- **MongoDB**: Database with authentication
+## Features
 
-## 📋 Prerequisites
+- ✅ User Registration
+- ✅ User Login
+- ✅ JWT Token Authentication
+- ✅ Role-Based Access Control (Admin, Recruiter, Consultant)
+- ✅ Password Hashing (Bcrypt)
+- ✅ Protected Routes
+- ✅ User Profile Management
 
-- Docker and Docker Compose
-- Node.js 18+ (for local development)
-- Python 3.11+ (for local development)
+## Project Structure
 
-## 🚀 Quick Start with Docker
+```
+Consultant--Tracker/
+├── backend/
+│   ├── app/
+│   │   ├── auth.py          # Authentication utilities (JWT, password hashing)
+│   │   ├── db.py             # Database connection and indexes
+│   │   ├── main.py           # FastAPI application
+│   │   ├── models.py         # Pydantic models (User only)
+│   │   ├── repositories/
+│   │   │   └── users.py      # User repository (CRUD operations)
+│   │   └── routers/
+│   │       └── auth.py       # Authentication endpoints
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── api.js            # API client
+│   │   ├── App.js            # Main app component
+│   │   ├── components/
+│   │   │   └── auth/
+│   │   │       ├── Login.js
+│   │   │       ├── Register.js
+│   │   │       └── ProtectedRoute.js
+│   │   └── contexts/
+│   │       └── AuthContext.js
+└── README.md
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd consultant-tracker
-   ```
-
-2. **Start all services**
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Seed the database** (optional)
-   ```bash
-   docker-compose exec backend python seed_data.py
-   ```
-
-4. **Access the application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
-   - MongoDB: localhost:27017
-
-## 🏗 Local Development Setup
+## Setup Instructions
 
 ### Backend Setup
 
-1. **Navigate to backend directory**
+1. **Navigate to backend directory:**
    ```bash
    cd backend
    ```
 
-2. **Create virtual environment**
+2. **Create virtual environment:**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python -m venv .venv
    ```
 
-3. **Install dependencies**
+3. **Activate virtual environment:**
+   - Windows:
+     ```bash
+     .venv\Scripts\activate
+     ```
+   - Linux/Mac:
+     ```bash
+     source .venv/bin/activate
+     ```
+
+4. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Set environment variables**
-   ```bash
-   export MONGODB_URL="mongodb://localhost:27017/consultant_tracker"
-   ```
+5. **Start MongoDB:**
+   - Make sure MongoDB is running on `localhost:27017`
+   - Or set `MONGODB_URL` environment variable
 
-5. **Start MongoDB** (if not using Docker)
-   ```bash
-   mongod
-   ```
-
-6. **Run the backend**
+6. **Run the backend:**
    ```bash
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
 ### Frontend Setup
 
-1. **Navigate to frontend directory**
+1. **Navigate to frontend directory:**
    ```bash
    cd frontend
    ```
 
-2. **Install dependencies**
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. **Set environment variables**
-   ```bash
-   export REACT_APP_API_URL="http://localhost:8000/api"
-   ```
-
-4. **Start the frontend**
+3. **Start the frontend:**
    ```bash
    npm start
    ```
 
-## 📊 Database Schema
+The frontend will run on `http://localhost:3000` (or next available port).
 
-### Consultants Collection
-```json
-{
-  "_id": "ObjectId",
-  "name": "string",
-  "experience_years": "number",
-  "tech_stack": ["string"],
-  "available": "boolean",
-  "location": "string",
-  "visa_status": "enum",
-  "rating": "enum",
-  "email": "string",
-  "phone": "string",
-  "notes": "string",
-  "created_at": "datetime",
-  "updated_at": "datetime"
-}
-```
+## API Endpoints
 
-### Submissions Collection
-```json
-{
-  "_id": "ObjectId",
-  "consultant_id": "string",
-  "client_or_job": "string",
-  "recruiter": "string",
-  "submitted_on": "datetime",
-  "status": "enum",
-  "comments": "string",
-  "attachment_path": "string",
-  "created_at": "datetime",
-  "updated_at": "datetime"
-}
-```
+### Authentication
 
-### Status History Collection
-```json
-{
-  "_id": "ObjectId",
-  "submission_id": "string",
-  "old_status": "enum",
-  "new_status": "enum",
-  "changed_at": "datetime",
-  "changed_by": "string",
-  "comments": "string"
-}
-```
+- `POST /api/auth/register` - Register a new user
+  - Body: `{ "email": "user@example.com", "name": "User Name", "password": "password123", "role": "CONSULTANT" }`
+  - Roles: `ADMIN`, `RECRUITER`, `CONSULTANT`
 
-## 🔌 API Endpoints
+- `POST /api/auth/login` - Login user
+  - Body: `{ "email": "user@example.com", "password": "password123" }`
+  - Returns: `{ "access_token": "...", "token_type": "bearer" }`
 
-### Consultants
-- `POST /api/consultants/` - Create consultant
-- `GET /api/consultants/` - List consultants (with filters)
-- `GET /api/consultants/{id}` - Get consultant by ID
-- `PUT /api/consultants/{id}` - Update consultant
-- `DELETE /api/consultants/{id}` - Delete consultant
-- `POST /api/consultants/import-csv` - Import consultants from CSV
-- `GET /api/consultants/export/csv` - Export consultants to CSV
+- `GET /api/auth/me` - Get current user info (requires authentication)
+  - Headers: `Authorization: Bearer <token>`
 
-### Submissions
-- `POST /api/submissions/` - Create submission
-- `GET /api/submissions/` - List submissions (with filters)
-- `GET /api/submissions/{id}` - Get submission by ID
-- `PUT /api/submissions/{id}` - Update submission
-- `PUT /api/submissions/{id}/status` - Update submission status
-- `DELETE /api/submissions/{id}` - Delete submission
-- `GET /api/submissions/consultant/{id}` - Get submissions by consultant
-- `GET /api/submissions/{id}/history` - Get status history
+- `POST /api/auth/refresh` - Refresh access token (requires authentication)
 
-### Reports
-- `GET /api/reports/status` - Submissions by status
-- `GET /api/reports/tech` - Submissions by tech stack
-- `GET /api/reports/recruiter` - Recruiter productivity
-- `GET /api/reports/funnel` - Pipeline funnel
-- `GET /api/reports/time-to-stage` - Time between stages
-- `GET /api/reports/dashboard` - Comprehensive dashboard data
+- `POST /api/auth/logout` - Logout user (client should discard token)
 
-## 🧪 Testing
+### Admin Only
 
-### Backend Tests
-```bash
-cd backend
-pytest tests/ -v
-```
+- `GET /api/auth/users` - Get all users (Admin only)
+- `POST /api/auth/users` - Create a new user (Admin only)
 
-### Frontend Tests
-```bash
-cd frontend
-npm test
-```
+## User Roles
 
-## 📁 Project Structure
+1. **ADMIN** - Full access to all features
+2. **RECRUITER** - Can manage consultants and submissions
+3. **CONSULTANT** - Can view own profile and submissions
 
-```
-consultant-tracker/
-├── backend/
-│   ├── app/
-│   │   ├── main.py                 # FastAPI application
-│   │   ├── db.py                   # Database configuration
-│   │   ├── models.py               # Pydantic models
-│   │   ├── repositories/           # Data access layer
-│   │   │   ├── consultants.py
-│   │   │   ├── submissions.py
-│   │   │   └── reports.py
-│   │   └── routers/                # API routes
-│   │       ├── consultants.py
-│   │       ├── submissions.py
-│   │       └── reports.py
-│   ├── tests/                      # Unit tests
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── seed_data.py               # Sample data
-├── frontend/
-│   ├── src/
-│   │   ├── components/            # Reusable components
-│   │   ├── pages/                 # Page components
-│   │   │   ├── Consultants.js
-│   │   │   ├── Submissions.js
-│   │   │   ├── PerConsultant.js
-│   │   │   ├── Availability.js
-│   │   │   └── Reports.js
-│   │   ├── App.js                 # Main app component
-│   │   ├── api.js                 # API client
-│   │   └── index.js               # Entry point
-│   ├── package.json
-│   └── Dockerfile
-├── mongo-init/                    # MongoDB initialization
-├── docker-compose.yml
-└── README.md
-```
+## Environment Variables
 
-## 🔧 Configuration
+### Backend
 
-### Environment Variables
+- `MONGODB_URL` - MongoDB connection string (default: `mongodb://localhost:27017`)
+- `SECRET_KEY` - JWT secret key (default: `your-secret-key-change-this-in-production`)
+- `CORS_ORIGINS` - Comma-separated list of allowed CORS origins
 
-#### Backend
-- `MONGODB_URL`: MongoDB connection string
-- `DEBUG`: Enable debug mode
+### Frontend
 
-#### Frontend
-- `REACT_APP_API_URL`: Backend API URL
+- `REACT_APP_API_URL` - Backend API URL (default: `http://localhost:8000/api`)
 
-### Docker Configuration
-- MongoDB: Port 27017
-- Backend: Port 8000
-- Frontend: Port 3000
+## Password Requirements
 
-## 📈 Usage Examples
+- Minimum 6 characters
+- Maximum 72 bytes (bcrypt limitation)
+- For ASCII characters, this is approximately 72 characters
+- Special characters or emojis use multiple bytes per character
 
-### Adding a Consultant
-1. Navigate to Consultants page
-2. Click "Add Consultant"
-3. Fill in the form with consultant details
-4. Select tech stack and other preferences
-5. Save the consultant
+## Testing
 
-### Creating a Submission
-1. Go to Submissions page
-2. Click "Add Submission"
-3. Select consultant from dropdown
-4. Enter client/job details
-5. Set submission date and status
-6. Add any comments
-7. Save the submission
+1. **Register a new user:**
+   - Go to `http://localhost:3000/register`
+   - Fill in the form and select a role
+   - Submit to create an account
 
-### Viewing Reports
-1. Navigate to Reports page
-2. Apply filters (date range, recruiter, etc.)
-3. View various charts and analytics
-4. Export data to CSV if needed
+2. **Login:**
+   - Go to `http://localhost:3000/login`
+   - Enter your email and password
+   - You'll be redirected to the dashboard
 
-### Managing Availability
-1. Go to Availability page
-2. Use filters to find consultants
-3. Toggle availability status
-4. Add submissions directly from consultant cards
+3. **View Profile:**
+   - After login, you'll see your user information on the dashboard
 
-## 🚀 Deployment
+## Notes
 
-### Production Deployment
-
-1. **Update environment variables for production**
-   ```bash
-   # Backend
-   export MONGODB_URL="mongodb://your-production-mongodb-url"
-   
-   # Frontend
-   export REACT_APP_API_URL="https://your-api-domain.com/api"
-   ```
-
-2. **Build production images**
-   ```bash
-   docker-compose -f docker-compose.prod.yml build
-   ```
-
-3. **Deploy with production compose file**
-   ```bash
-   docker-compose -f docker-compose.prod.yml up -d
-   ```
-
-### Scaling Considerations
-- Use MongoDB Atlas for production database
-- Implement Redis for caching
-- Add load balancer for multiple backend instances
-- Use CDN for frontend static assets
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the repository
-- Check the API documentation at `/docs`
-- Review the test files for usage examples
-
-## 🔄 Version History
-
-- **v1.0.0**: Initial release with core functionality
-  - Consultant management
-  - Submission tracking
-  - Basic reporting
-  - Docker support
+- Passwords are hashed using bcrypt
+- JWT tokens expire after 30 minutes (configurable)
+- CORS is configured for `localhost:3000` and `localhost:3001`
+- All API endpoints require proper authentication headers for protected routes

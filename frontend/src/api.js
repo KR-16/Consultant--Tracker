@@ -9,9 +9,13 @@ const api = axios.create({
   },
 });
 
-// Request interceptor
+// Request interceptor - Add token to requests
 api.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -19,65 +23,37 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
+// Response interceptor - Handle errors and authentication
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
+    if (error.response?.status === 401) {
+      // Only redirect if user was previously authenticated (has token)
+      // Don't redirect for registration/login attempts
+      const token = localStorage.getItem('token');
+      if (token) {
+        localStorage.removeItem('token');
+        // Only redirect if not on login/register pages
+        if (!window.location.pathname.includes('/login') && 
+            !window.location.pathname.includes('/register')) {
+          window.location.href = '/login';
+        }
+      }
+    }
     console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
 
-// Consultant API
-export const consultantAPI = {
-  getAll: (params = {}) => api.get('/consultants/', { params }),
-  getById: (id) => api.get(`/consultants/${id}`),
-  create: (data) => api.post('/consultants/', data),
-  update: (id, data) => api.put(`/consultants/${id}`, data),
-  delete: (id) => api.delete(`/consultants/${id}`),
-  importCSV: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return api.post('/consultants/import-csv', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
-  exportCSV: () => api.get('/consultants/export/csv'),
-};
-
-// Submission API
-export const submissionAPI = {
-  getAll: (params = {}) => api.get('/submissions/', { params }),
-  getById: (id) => api.get(`/submissions/${id}`),
-  create: (data) => api.post('/submissions/', data),
-  update: (id, data) => api.put(`/submissions/${id}`, data),
-  updateStatus: (id, status, changedBy, comments) => 
-    api.put(`/submissions/${id}/status`, { status, comments }, {
-      params: { changed_by: changedBy }
-    }),
-  delete: (id) => api.delete(`/submissions/${id}`),
-  getByConsultant: (consultantId) => api.get(`/submissions/consultant/${consultantId}`),
-  getStatusHistory: (id) => api.get(`/submissions/${id}/history`),
-  importCSV: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return api.post('/submissions/import-csv', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  },
-  exportCSV: (params = {}) => api.get('/submissions/export/csv', { params }),
-};
-
-// Reports API
-export const reportsAPI = {
-  getStatusReport: (params = {}) => api.get('/reports/status', { params }),
-  getTechReport: (params = {}) => api.get('/reports/tech', { params }),
-  getRecruiterReport: (params = {}) => api.get('/reports/recruiter', { params }),
-  getFunnelReport: (params = {}) => api.get('/reports/funnel', { params }),
-  getTimeToStageReport: (params = {}) => api.get('/reports/time-to-stage', { params }),
-  getDashboard: (params = {}) => api.get('/reports/dashboard', { params }),
+// Auth API
+export const authAPI = {
+  login: (email, password) => api.post('/auth/login', { email, password }),
+  register: (userData) => api.post('/auth/register', userData),
+  getCurrentUser: () => api.get('/auth/me'),
+  refreshToken: () => api.post('/auth/refresh'),
+  logout: () => api.post('/auth/logout'),
 };
 
 export default api;
