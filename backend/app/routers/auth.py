@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer
 from datetime import timedelta
 import logging
-from app.models import User, UserCreate, UserLogin, Token, UserRole
+from app.models import User, UserCreate, UserLogin, Token, UserRole, UserResponse
 from app.repositories.users import UserRepository
 from app.auth import authenticate_user, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.db import get_database
@@ -16,7 +16,7 @@ def get_user_repository():
     logger.debug("Creating UserRepository instance")
     return UserRepository()
 
-@router.post("/register", response_model=User)
+@router.post("/register", response_model=UserResponse)
 async def register(
     user_data: UserCreate,
     repo: UserRepository = Depends(get_user_repository)
@@ -50,7 +50,7 @@ async def register(
             else:
                 logger.warning("hashed_password not found in user_dict")
             
-            response_user = User(**user_dict)
+            response_user = UserResponse(**user_dict)
             logger.info(f"Registration completed successfully for email: {user_data.email}, ID: {user.id}")
             return response_user
         except Exception as e:
@@ -143,7 +143,7 @@ async def login(
             detail="Login failed due to internal error"
         )
 
-@router.get("/me", response_model=User)
+@router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information"""
     logger.info(f"Get current user info request for: {current_user.email}")
@@ -159,7 +159,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
             else:
                 logger.warning("hashed_password not found in user_dict")
             
-            response_user = User(**user_dict)
+            response_user = UserResponse(**user_dict)
             logger.info(f"User info retrieved successfully for: {current_user.email}, role: {current_user.role}")
             return response_user
         except Exception as e:
@@ -236,7 +236,7 @@ async def logout():
         )
 
 # Admin-only endpoints
-@router.get("/users", response_model=list[User])
+@router.get("/users", response_model=list[UserResponse])
 async def get_all_users(
     skip: int = 0,
     limit: int = 100,
@@ -281,7 +281,7 @@ async def get_all_users(
                 user_dict = user.dict()
                 if "hashed_password" in user_dict:
                     del user_dict["hashed_password"]
-                response_users.append(User(**user_dict))
+                response_users.append(UserResponse(**user_dict))
             logger.debug(f"Passwords removed from {len(response_users)} users")
         except Exception as e:
             logger.error(f"Error preparing user list response: {str(e)}", exc_info=True)
@@ -303,7 +303,7 @@ async def get_all_users(
             detail="Failed to retrieve users"
         )
 
-@router.post("/users", response_model=User)
+@router.post("/users", response_model=UserResponse)
 async def create_user(
     user_data: UserCreate,
     current_user: User = Depends(get_current_user),
@@ -348,7 +348,7 @@ async def create_user(
             else:
                 logger.warning("hashed_password not found in user_dict")
             
-            response_user = User(**user_dict)
+            response_user = UserResponse(**user_dict)
             logger.info(f"User creation completed successfully by admin {current_user.email} for: {user_data.email}")
             return response_user
         except Exception as e:

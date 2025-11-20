@@ -205,7 +205,7 @@ async def get_user_by_email(email: str) -> Optional[User]:
         logger.debug("Step 2: Getting database connection")
         try:
             db = await get_database()
-            if not db:
+            if db is None:
                 logger.error("Database connection not available")
                 return None
             logger.debug("Database connection obtained successfully")

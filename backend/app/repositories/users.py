@@ -24,7 +24,7 @@ class UserRepository:
             # Step 1: Get database connection
             logger.debug("Step 1: Getting database connection")
             db = await get_database()
-            if not db:
+            if db is None:
                 raise ValueError("Database connection not available")
             logger.debug("Database connection obtained successfully")
             
@@ -133,7 +133,7 @@ class UserRepository:
             # Step 2: Get database connection
             logger.debug("Step 2: Getting database connection")
             db = await get_database()
-            if not db:
+            if db is None:
                 logger.error("Database connection not available")
                 raise ValueError("Database connection not available")
             logger.debug("Database connection obtained successfully")
@@ -176,7 +176,7 @@ class UserRepository:
             # Step 2: Get database connection
             logger.debug("Step 2: Getting database connection")
             db = await get_database()
-            if not db:
+            if db is None:
                 logger.error("Database connection not available")
                 raise ValueError("Database connection not available")
             logger.debug("Database connection obtained successfully")
@@ -213,7 +213,7 @@ class UserRepository:
             # Step 1: Get database connection
             logger.debug("Step 1: Getting database connection")
             db = await get_database()
-            if not db:
+            if db is None:
                 logger.error("Database connection not available")
                 raise ValueError("Database connection not available")
             logger.debug("Database connection obtained successfully")
@@ -268,7 +268,7 @@ class UserRepository:
             # Step 2: Get database connection
             logger.debug("Step 2: Getting database connection")
             db = await get_database()
-            if not db:
+            if db is None:
                 logger.error("Database connection not available")
                 raise ValueError("Database connection not available")
             logger.debug("Database connection obtained successfully")
@@ -332,7 +332,7 @@ class UserRepository:
             # Step 2: Get database connection
             logger.debug("Step 2: Getting database connection")
             db = await get_database()
-            if not db:
+            if db is None:
                 logger.error("Database connection not available")
                 raise ValueError("Database connection not available")
             logger.debug("Database connection obtained successfully")
@@ -377,7 +377,7 @@ class UserRepository:
             # Step 2: Get database connection
             logger.debug("Step 2: Getting database connection")
             db = await get_database()
-            if not db:
+            if db is None:
                 logger.error("Database connection not available")
                 raise ValueError("Database connection not available")
             logger.debug("Database connection obtained successfully")
@@ -430,7 +430,7 @@ class UserRepository:
             # Step 2: Get database connection
             logger.debug("Step 2: Getting database connection")
             db = await get_database()
-            if not db:
+            if db is None:
                 logger.error("Database connection not available")
                 raise ValueError("Database connection not available")
             logger.debug("Database connection obtained successfully")
@@ -485,7 +485,7 @@ class UserRepository:
             # Step 1: Get database connection
             logger.debug("Step 1: Getting database connection")
             db = await get_database()
-            if not db:
+            if db is None:
                 logger.error("Database connection not available")
                 raise ValueError("Database connection not available")
             logger.debug("Database connection obtained successfully")

@@ -119,6 +119,14 @@ class UserUpdate(BaseModel):
             logger.error(f"Error initializing UserUpdate: {str(e)}", exc_info=True)
             raise
 
+class UserResponse(UserBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
 class User(UserBase):
     id: str
     created_at: datetime
