@@ -17,7 +17,21 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 
-// Simple Dashboard component
+import ConsultantDashboard from './components/consultant/ConsultantDashboard';
+import RecruiterDashboard from './components/recruiter/RecruiterDashboard';
+
+const Home = () => {
+  const { user } = useAuth();
+  if (user?.role === 'CONSULTANT') {
+    return <Navigate to="/consultant/dashboard" replace />;
+  }
+  if (user?.role === 'RECRUITER' || user?.role === 'ADMIN') {
+    return <Navigate to="/recruiter/dashboard" replace />;
+  }
+  return <Navigate to="/login" replace />;
+};
+
+// Simple Dashboard component (Legacy, can be removed later)
 const Dashboard = () => {
   const { user, logout } = useAuth();
 
@@ -145,17 +159,35 @@ function App() {
       </AppBar>
 
       <Routes>
-        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/register" element={<Navigate to="/dashboard" replace />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        } />
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/register" element={<Navigate to="/" replace />} />
+
+        {/* Consultant Routes */}
+        <Route path="/consultant/*" element={
+          <ProtectedRoute requiredRole="CONSULTANT">
+            <Routes>
+              <Route path="dashboard" element={<ConsultantDashboard />} />
+              <Route path="*" element={<Navigate to="dashboard" replace />} />
+            </Routes>
+          </ProtectedRoute>
+        } />
+
+        {/* Recruiter Routes */}
+        <Route path="/recruiter/*" element={
+          <ProtectedRoute requiredRole="RECRUITER">
+            <Routes>
+              <Route path="dashboard" element={<RecruiterDashboard />} />
+              <Route path="*" element={<Navigate to="dashboard" replace />} />
+            </Routes>
+          </ProtectedRoute>
+        } />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Box>
   );

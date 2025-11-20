@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 import logging
@@ -259,3 +259,104 @@ class TokenData(BaseModel):
         else:
             logger.debug("Email is None - skipping validation")
         return v
+
+# Consultant Profile Models
+class ConsultantProfileBase(BaseModel):
+    experience_years: float = Field(..., ge=0)
+    tech_stack: List[str] = []
+    available: bool = True
+    location: Optional[str] = None
+    visa_status: Optional[str] = None
+    rating: Optional[float] = None
+    notes: Optional[str] = None
+
+class ConsultantProfileCreate(ConsultantProfileBase):
+    pass
+
+class ConsultantProfileUpdate(BaseModel):
+    experience_years: Optional[float] = Field(None, ge=0)
+    tech_stack: Optional[List[str]] = None
+    available: Optional[bool] = None
+    location: Optional[str] = None
+    visa_status: Optional[str] = None
+    notes: Optional[str] = None
+
+class ConsultantProfile(ConsultantProfileBase):
+    id: str
+    user_id: str
+    email: Optional[str] = None
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+# Job Description Models
+class JobDescriptionBase(BaseModel):
+    title: str = Field(..., min_length=1)
+    description: str
+    experience_required: float = Field(..., ge=0)
+    tech_required: List[str] = []
+    location: Optional[str] = None
+    visa_required: Optional[str] = None
+    notes: Optional[str] = None
+    status: str = "OPEN"  # OPEN, CLOSED
+
+class JobDescriptionCreate(JobDescriptionBase):
+    pass
+
+class JobDescriptionUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    experience_required: Optional[float] = None
+    tech_required: Optional[List[str]] = None
+    location: Optional[str] = None
+    visa_required: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[str] = None
+
+class JobDescription(JobDescriptionBase):
+    id: str
+    recruiter_id: str
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# Submission Models
+class SubmissionStatus(str, Enum):
+    SUBMITTED = "SUBMITTED"
+    INTERVIEW = "INTERVIEW"
+    OFFER = "OFFER"
+    JOINED = "JOINED"
+    REJECTED = "REJECTED"
+    ON_HOLD = "ON_HOLD"
+    WITHDRAWN = "WITHDRAWN"
+
+class SubmissionBase(BaseModel):
+    jd_id: str
+    comments: Optional[str] = None
+
+class SubmissionCreate(SubmissionBase):
+    pass
+
+class SubmissionUpdate(BaseModel):
+    status: Optional[SubmissionStatus] = None
+    comments: Optional[str] = None
+    recruiter_read: Optional[bool] = None
+
+class Submission(SubmissionBase):
+    id: str
+    consultant_id: str
+    recruiter_id: str
+    resume_path: str
+    status: SubmissionStatus
+    recruiter_read: bool = False
+    created_at: datetime
+    updated_at: datetime
+    consultant_name: Optional[str] = None
+    jd_title: Optional[str] = None
+    
+    class Config:
+        from_attributes = True

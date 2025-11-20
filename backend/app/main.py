@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import os
 import logging
 from app.db import init_db, close_db
-from app.routers import auth
+from app.routers import auth, consultants, jobs, submissions
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -128,6 +128,9 @@ try:
     logger.debug("Step 1: Including authentication router")
     try:
         app.include_router(auth.router, prefix="/api", tags=["authentication"])
+        app.include_router(consultants.router, prefix="/api", tags=["consultants"])
+        app.include_router(jobs.router, prefix="/api", tags=["jobs"])
+        app.include_router(submissions.router, prefix="/api", tags=["submissions"])
         logger.info("Authentication router registered successfully at /api")
         logger.debug(f"Router prefix: /api, tags: ['authentication']")
     except Exception as e:
