@@ -30,7 +30,37 @@ const Login = () => {
     if (result.success) {
       navigate('/');
     } else {
-      setError(result.error);
+      const errData = result.error;
+      let msg = "Invalid email or password";
+
+      if (errData) {
+    
+        if (typeof errData === 'string') {
+           msg = errData;
+        }
+        else if (Array.isArray(errData) && errData.length > 0) {
+           const firstError = errData[0]
+           if (firstError.loc && firstError.loc.includes('email')) {
+               msg = "Invalid email address";
+           } else {
+               msg = firstError.msg; 
+           }
+        }
+        else if (errData.detail) {
+           if (Array.isArray(errData.detail)) {
+             const firstDetail = errData.detail[0];
+             if (firstDetail.loc && firstDetail.loc.includes('email')) {
+                 msg = "Invalid email address";
+             } else {
+                 msg = firstDetail.msg;
+             }
+           } else {
+             msg = errData.detail;
+           }
+        }
+      }
+      
+      setError(msg);
     }
     
     setLoading(false);
@@ -112,4 +142,3 @@ const Login = () => {
 };
 
 export default Login;
-

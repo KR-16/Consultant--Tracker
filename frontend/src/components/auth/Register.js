@@ -36,8 +36,7 @@ const Register = () => {
       ...formData,
       [name]: value,
     });
-    
-    // Update byte length for password field
+  
     if (name === 'password') {
       const bytes = new TextEncoder().encode(value);
       setPasswordByteLength(bytes.length);
@@ -58,14 +57,10 @@ const Register = () => {
       return;
     }
 
-    // Check byte length (UTF-8 encoding) - bcrypt limit is 72 bytes
     const passwordBytes = new TextEncoder().encode(formData.password);
     if (passwordBytes.length > 72) {
       setError(
-        `Password is too long (${passwordBytes.length} bytes). ` +
-        `Maximum 72 bytes allowed. ` +
-        `For ASCII characters, this is approximately 72 characters. ` +
-        `Special characters or emojis use multiple bytes per character.`
+        `Password is too long (${passwordBytes.length} bytes). Maximum 72 bytes allowed.`
       );
       return;
     }
@@ -78,7 +73,36 @@ const Register = () => {
     if (result.success) {
       navigate('/login');
     } else {
-      setError(result.error);
+      const errData = result.error;
+      let msg = "Registration failed";
+
+      if (errData) {
+        if (typeof errData === 'string') {
+           msg = errData;
+        }
+        else if (Array.isArray(errData) && errData.length > 0) {
+           const firstError = errData[0];
+           if (firstError.loc && firstError.loc.includes('email')) {
+               msg = "Invalid email address";
+           } else {
+               msg = firstError.msg;
+           }
+        }
+        else if (errData.detail) {
+           if (Array.isArray(errData.detail)) {
+             const firstDetail = errData.detail[0];
+             if (firstDetail.loc && firstDetail.loc.includes('email')) {
+                 msg = "Invalid email address";
+             } else {
+                 msg = firstDetail.msg;
+             }
+           } else {
+             msg = errData.detail;
+           }
+        }
+      }
+      
+      setError(msg);
     }
 
     setLoading(false);
@@ -171,7 +195,7 @@ const Register = () => {
                   : "6-72 bytes (bcrypt limitation)"
               }
               inputProps={{
-                maxLength: 72 // Rough limit, actual validation checks bytes
+                maxLength: 72 
               }}
             />
             <TextField
@@ -211,4 +235,3 @@ const Register = () => {
 };
 
 export default Register;
-
