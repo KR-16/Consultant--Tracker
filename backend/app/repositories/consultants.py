@@ -113,23 +113,27 @@ class ConsultantRepository:
             logger.error(f"Error updating consultant profile: {str(e)}", exc_info=True)
             raise
 
-    async def get_all(self, skip: int = 0, limit: int = 100) -> List[ConsultantProfile]:
-        """Get all consultants (for recruiters)"""
-        logger.debug(f"Getting all consultants")
+    async def get_all(self, skip: int = 0, limit: int = 100, user_ids: Optional[List[str]] = None) -> List[ConsultantProfile]:
+        """Get all consultants (optionally filtered by specific user_ids)"""
+        logger.debug(f"Getting consultants. Filter by IDs: {user_ids is not None}")
         try:
             db = await get_database()
             if db is None:
                 raise ValueError("Database connection not available")
-
-            cursor = db.consultants.find().skip(skip).limit(limit)
+            
+            query = {}
+            if user_ids is not None:
+                query["user_id"] = {"$in": user_ids}
+            
+            cursor = db.consultants.find(query).skip(skip).limit(limit)
             profiles = []
-
+            
             async for doc in cursor:
                 doc["id"] = str(doc["_id"])
                 doc = await self._merge_user_data(doc, db)
                 profiles.append(ConsultantProfile(**doc))
-
+                
             return profiles
         except Exception as e:
-            logger.error(f"Error getting all consultants: {str(e)}", exc_info=True)
+            logger.error(f"Error getting consultants: {str(e)}", exc_info=True)
             raise
