@@ -15,7 +15,8 @@ import {
     Alert,
     CircularProgress
 } from '@mui/material';
-import axios from 'axios';
+
+import api, { jobAPI } from '../../api';
 
 const ConsultantJobs = () => {
     const [jobs, setJobs] = useState([]);
@@ -35,10 +36,8 @@ const ConsultantJobs = () => {
 
     const fetchJobs = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('/api/jobs', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+ 
+            const response = await jobAPI.getAll();
             setJobs(response.data);
         } catch (error) {
             console.error('Error fetching jobs:', error);
@@ -49,10 +48,8 @@ const ConsultantJobs = () => {
 
     const fetchMySubmissions = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('/api/submissions/me', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+    
+            const response = await api.get('/submissions/me');
             setMySubmissions(response.data);
         } catch (error) {
             console.error('Error fetching submissions:', error);
@@ -88,15 +85,14 @@ const ConsultantJobs = () => {
         if (comments) formData.append('comments', comments);
 
         try {
-            const token = localStorage.getItem('token');
-            await axios.post('/api/submissions/', formData, {
+            await api.post('/submissions/', formData, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
+            
             setMessage({ type: 'success', text: 'Application submitted successfully!' });
-            fetchMySubmissions(); // Refresh submissions to update "Applied" status
+            fetchMySubmissions(); 
             setTimeout(() => {
                 setApplyDialogOpen(false);
             }, 1500);
