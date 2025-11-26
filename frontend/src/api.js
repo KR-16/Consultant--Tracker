@@ -9,7 +9,6 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - Add token to requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -23,19 +22,15 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors and authentication
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Only redirect if user was previously authenticated (has token)
-      // Don't redirect for registration/login attempts
       const token = localStorage.getItem('token');
       if (token) {
         localStorage.removeItem('token');
-        // Only redirect if not on login/register pages
         if (!window.location.pathname.includes('/login') && 
             !window.location.pathname.includes('/register')) {
           window.location.href = '/login';
@@ -47,13 +42,29 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API
+
 export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   register: (userData) => api.post('/auth/register', userData),
   getCurrentUser: () => api.get('/auth/me'),
-  refreshToken: () => api.post('/auth/refresh'),
-  logout: () => api.post('/auth/logout'),
+};
+
+export const jobAPI = {
+
+  getAll: () => api.get('/jobs/'), 
+  create: (jobData) => api.post('/jobs/', jobData),
+  getOne: (id) => api.get(`/jobs/${id}`),
+};
+
+export const submissionAPI = {
+  getAll: () => api.get('/submissions/'),
+  create: (data) => api.post('/submissions/', data),
+  updateStatus: (id, status) => api.put(`/submissions/${id}`, { status }),
+};
+
+export const consultantAPI = {
+  getAll: () => api.get('/consultants/'),
+  getProfile: () => api.get('/consultants/me'),
 };
 
 export default api;

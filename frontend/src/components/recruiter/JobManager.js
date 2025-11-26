@@ -21,7 +21,8 @@ import {
     CircularProgress
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import axios from 'axios';
+// --- FIX 1: Import the centralized API helper ---
+import api, { jobAPI } from '../../api';
 
 const JobManager = () => {
     const [jobs, setJobs] = useState([]);
@@ -46,10 +47,8 @@ const JobManager = () => {
 
     const fetchJobs = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('/api/jobs', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            // --- FIX 2: Use jobAPI (Token is handled automatically) ---
+            const response = await jobAPI.getAll();
             setJobs(response.data);
         } catch (error) {
             console.error('Error fetching jobs:', error);
@@ -65,7 +64,7 @@ const JobManager = () => {
                 title: job.title,
                 description: job.description,
                 experience_required: job.experience_required,
-                tech_required: job.tech_required.join(', '),
+                tech_required: job.tech_required ? job.tech_required.join(', ') : '',
                 location: job.location || '',
                 visa_required: job.visa_required || '',
                 status: job.status
@@ -96,21 +95,20 @@ const JobManager = () => {
         setMessage({ type: '', text: '' });
 
         try {
-            const token = localStorage.getItem('token');
+            // Prepare payload
             const payload = {
                 ...formData,
                 experience_required: Number(formData.experience_required),
                 tech_required: formData.tech_required.split(',').map(t => t.trim()).filter(t => t)
             };
 
+            // --- FIX 3: Use api helpers instead of axios ---
             if (editingJob) {
-                await axios.put(`/api/jobs/${editingJob.id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                // Update existing job
+                await api.put(`/jobs/${editingJob.id}`, payload);
             } else {
-                await axios.post('/api/jobs', payload, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                // Create new job (Uses jobAPI.create to ensure trailing slash)
+                await jobAPI.create(payload);
             }
 
             setMessage({ type: 'success', text: `Job ${editingJob ? 'updated' : 'created'} successfully` });
@@ -156,7 +154,7 @@ const JobManager = () => {
                                     {job.location} • {job.experience_required}+ Years
                                 </Typography>
                                 <Box mb={2}>
-                                    {job.tech_required.map((tech) => (
+                                    {job.tech_required && job.tech_required.map((tech) => (
                                         <Chip key={tech} label={tech} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
                                     ))}
                                 </Box>

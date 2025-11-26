@@ -12,7 +12,8 @@ import {
     Alert,
     CircularProgress
 } from '@mui/material';
-import axios from 'axios';
+
+import api, { consultantAPI } from '../../api';
 
 const ConsultantProfile = () => {
     const [profile, setProfile] = useState({
@@ -37,10 +38,8 @@ const ConsultantProfile = () => {
 
     const fetchProfile = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('/api/consultants/me', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+        
+            const response = await consultantAPI.getProfile();
             setProfile(response.data);
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -85,16 +84,13 @@ const ConsultantProfile = () => {
         setMessage({ type: '', text: '' });
 
         try {
-            const token = localStorage.getItem('token');
-            await axios.put('/api/consultants/me', {
+            await api.put('/consultants/me', {
                 experience_years: Number(profile.experience_years),
                 tech_stack: profile.tech_stack,
                 available: profile.available,
                 location: profile.location,
                 visa_status: profile.visa_status,
                 notes: profile.notes
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
             setMessage({ type: 'success', text: 'Profile updated successfully' });
         } catch (error) {
@@ -139,8 +135,10 @@ const ConsultantProfile = () => {
                         <TextField
                             fullWidth
                             label="Phone"
+                            name="phone"
                             value={profile.phone || ''}
-                            disabled
+                            onChange={handleChange}
+    
                         />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -175,7 +173,7 @@ const ConsultantProfile = () => {
                     <Grid item xs={12}>
                         <Typography variant="subtitle2" gutterBottom>Tech Stack (Press Enter to add)</Typography>
                         <Box sx={{ mb: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                            {profile.tech_stack.map((tech) => (
+                            {profile.tech_stack && profile.tech_stack.map((tech) => (
                                 <Chip
                                     key={tech}
                                     label={tech}

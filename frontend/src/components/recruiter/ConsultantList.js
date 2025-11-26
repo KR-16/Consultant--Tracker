@@ -18,7 +18,8 @@ import {
     Grid,
     CircularProgress
 } from '@mui/material';
-import axios from 'axios';
+// --- FIX 1: Import the helper, NOT axios ---
+import { consultantAPI } from '../../api';
 
 const ConsultantList = () => {
     const [consultants, setConsultants] = useState([]);
@@ -32,10 +33,9 @@ const ConsultantList = () => {
 
     const fetchConsultants = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('/api/consultants', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            // --- FIX 2: Use consultantAPI.getAll() ---
+            // This handles the Token and the URL automatically
+            const response = await consultantAPI.getAll();
             setConsultants(response.data);
         } catch (error) {
             console.error('Error fetching consultants:', error);
@@ -72,10 +72,11 @@ const ConsultantList = () => {
                                 <TableCell>{consultant.name || 'N/A'}</TableCell>
                                 <TableCell>{consultant.experience_years} Years</TableCell>
                                 <TableCell>
-                                    {consultant.tech_stack.slice(0, 3).map(tech => (
+                                    {/* Safety check in case tech_stack is null */}
+                                    {consultant.tech_stack && consultant.tech_stack.slice(0, 3).map(tech => (
                                         <Chip key={tech} label={tech} size="small" sx={{ mr: 0.5 }} />
                                     ))}
-                                    {consultant.tech_stack.length > 3 && `+${consultant.tech_stack.length - 3}`}
+                                    {consultant.tech_stack && consultant.tech_stack.length > 3 && `+${consultant.tech_stack.length - 3}`}
                                 </TableCell>
                                 <TableCell>{consultant.location || '-'}</TableCell>
                                 <TableCell>
@@ -114,7 +115,7 @@ const ConsultantList = () => {
                             <Grid item xs={12}>
                                 <Typography variant="subtitle2">Skills</Typography>
                                 <Box sx={{ mt: 1 }}>
-                                    {selectedConsultant.tech_stack.map(tech => (
+                                    {selectedConsultant.tech_stack && selectedConsultant.tech_stack.map(tech => (
                                         <Chip key={tech} label={tech} sx={{ mr: 0.5, mb: 0.5 }} />
                                     ))}
                                 </Box>
