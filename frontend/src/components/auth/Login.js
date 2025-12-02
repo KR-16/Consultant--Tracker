@@ -50,9 +50,9 @@ const Login = () => {
            if (Array.isArray(errData.detail)) {
              const firstDetail = errData.detail[0];
              if (firstDetail.loc && firstDetail.loc.includes('email')) {
-                 msg = "Invalid email address";
+               msg = "Invalid email address";
              } else {
-                 msg = firstDetail.msg;
+               msg = firstDetail.msg;
              }
            } else {
              msg = errData.detail;

@@ -47,6 +47,7 @@ export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   register: (userData) => api.post('/auth/register', userData),
   getCurrentUser: () => api.get('/auth/me'),
+  refreshToken: () => api.post('/auth/refresh'),
 };
 
 export const jobAPI = {

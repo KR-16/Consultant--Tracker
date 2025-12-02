@@ -92,9 +92,9 @@ const Register = () => {
            if (Array.isArray(errData.detail)) {
              const firstDetail = errData.detail[0];
              if (firstDetail.loc && firstDetail.loc.includes('email')) {
-                 msg = "Invalid email address";
+               msg = "Invalid email address";
              } else {
-                 msg = firstDetail.msg;
+               msg = firstDetail.msg;
              }
            } else {
              msg = errData.detail;
@@ -123,7 +123,7 @@ const Register = () => {
             Consultant Tracker
           </Typography>
           <Typography variant="h6" component="h2" gutterBottom align="center" color="text.secondary">
-            Create Account
+            Sign Up
           </Typography>
 
           {error && (
@@ -154,7 +154,6 @@ const Register = () => {
               label="Email Address"
               name="email"
               autoComplete="email"
-              type="email"
               value={formData.email}
               onChange={handleChange}
               disabled={loading}
@@ -172,6 +171,7 @@ const Register = () => {
               >
                 <MenuItem value="CONSULTANT">Consultant</MenuItem>
                 <MenuItem value="RECRUITER">Recruiter</MenuItem>
+                <MenuItem value="ADMIN">Admin</MenuItem>
               </Select>
             </FormControl>
             <TextField
@@ -186,17 +186,7 @@ const Register = () => {
               value={formData.password}
               onChange={handleChange}
               disabled={loading}
-              error={passwordByteLength > 72}
-              helperText={
-                passwordByteLength > 72
-                  ? `Password too long (${passwordByteLength} bytes). Maximum 72 bytes allowed.`
-                  : passwordByteLength > 0
-                  ? `${passwordByteLength}/72 bytes`
-                  : "6-72 bytes (bcrypt limitation)"
-              }
-              inputProps={{
-                maxLength: 72 
-              }}
+              helperText={passwordByteLength > 0 ? `${passwordByteLength}/72 bytes` : ''}
             />
             <TextField
               margin="normal"
@@ -217,7 +207,7 @@ const Register = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : 'Sign Up'}
+              {loading ? <CircularProgress size={24} /> : 'SIGN UP'}
             </Button>
             <Box textAlign="center">
               <Typography variant="body2">

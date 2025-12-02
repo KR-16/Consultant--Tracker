@@ -16,7 +16,8 @@ dependencies = [
     "httpx",
     "python-jose[cryptography]",
     "passlib[bcrypt]",
-    "bcrypt<4.0.0",  # Pin bcrypt to compatible version for passlib
+    "bcrypt<4.0.0", # Pin bcrypt to compatible version for passlib
     "python-multipart",
     "aiofiles",
+    "authlib>=1.6.5",
 ]

@@ -30,79 +30,29 @@ logger.debug("Password hashing context initialized with bcrypt")
 security = HTTPBearer()
 logger.debug("HTTPBearer security scheme initialized")
 
-def _truncate_password(password: str, max_bytes: int = 72) -> str:
-    """Truncate password to max_bytes, avoiding mid-character truncation"""
-    logger.debug(f"Truncating password - max_bytes: {max_bytes}")
-    
-    try:
-        # Step 1: Encode password to bytes
-        logger.debug("Step 1: Encoding password to UTF-8 bytes")
-        password_bytes = password.encode('utf-8')
-        password_length = len(password_bytes)
-        logger.debug(f"Password byte length: {password_length} bytes")
-        
-        # Step 2: Check if truncation is needed
-        if password_length <= max_bytes:
-            logger.debug(f"Password does not need truncation ({password_length} <= {max_bytes})")
-            return password
-        
-        # Step 3: Truncate to max_bytes
-        logger.debug(f"Password needs truncation ({password_length} > {max_bytes})")
-        truncated = password_bytes[:max_bytes]
-        logger.debug(f"Password truncated to {len(truncated)} bytes")
-        
-        # Step 4: Remove any incomplete UTF-8 sequences at the end
-        logger.debug("Step 4: Removing incomplete UTF-8 sequences")
-        original_length = len(truncated)
-        while truncated and (truncated[-1] & 0x80) and not (truncated[-1] & 0x40):
-            truncated = truncated[:-1]
-        
-        if len(truncated) < original_length:
-            logger.debug(f"Removed {original_length - len(truncated)} bytes of incomplete UTF-8 sequences")
-        
-        # Step 5: Decode back to string
-        logger.debug("Step 5: Decoding truncated password back to string")
-        result = truncated.decode('utf-8', errors='ignore')
-        logger.debug(f"Password truncation completed - final length: {len(result.encode('utf-8'))} bytes")
-        return result
-        
-    except UnicodeEncodeError as e:
-        logger.error(f"Unicode encoding error during password truncation: {str(e)}", exc_info=True)
-        raise ValueError(f"Password encoding error: {str(e)}")
-    except Exception as e:
-        logger.error(f"Unexpected error during password truncation: {str(e)}", exc_info=True)
-        raise ValueError(f"Password truncation failed: {str(e)}")
-
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
     logger.debug("Starting password verification")
     
     try:
-        # Step 1: Truncate password if necessary (bcrypt 72-byte limit)
-        logger.debug("Step 1: Truncating password for bcrypt compatibility")
-        truncated_password = _truncate_password(plain_password)
-        logger.debug("Password truncated successfully")
+        # Truncate password to 72 bytes if necessary (bcrypt limitation)
+        password_bytes = plain_password.encode('utf-8')
+        if len(password_bytes) > 72:
+            logger.debug(f"Password exceeds 72 bytes ({len(password_bytes)} bytes), truncating")
+            truncated = password_bytes[:72]
+            # Remove incomplete UTF-8 sequences
+            while truncated and (truncated[-1] & 0x80) and not (truncated[-1] & 0x40):
+                truncated = truncated[:-1]
+            plain_password = truncated.decode('utf-8', errors='ignore')
         
-        # Step 2: Verify password against hash
-        logger.debug("Step 2: Verifying password against hash using bcrypt")
-        try:
-            is_valid = pwd_context.verify(truncated_password, hashed_password)
-            if is_valid:
-                logger.debug("Password verification successful")
-            else:
-                logger.debug("Password verification failed - password does not match")
-            return is_valid
-        except Exception as e:
-            logger.error(f"Error during password verification: {str(e)}", exc_info=True)
-            # Don't reveal details about verification failure for security
-            logger.warning("Password verification error occurred")
-            return False
-            
-    except ValueError as e:
-        logger.error(f"Password truncation error during verification: {str(e)}")
-        return False
+        is_valid = pwd_context.verify(plain_password, hashed_password)
+        if is_valid:
+            logger.debug("Password verification successful")
+        else:
+            logger.debug("Password verification failed - password does not match")
+        return is_valid
     except Exception as e:
-        logger.error(f"Unexpected error during password verification: {str(e)}", exc_info=True)
+        logger.error(f"Error during password verification: {str(e)}", exc_info=True)
         return False
 
 def get_password_hash(password: str) -> str:
@@ -110,38 +60,42 @@ def get_password_hash(password: str) -> str:
     logger.debug("Starting password hashing")
     
     try:
-        # Step 1: Truncate password to 72 bytes if necessary (bcrypt limitation)
-        logger.debug("Step 1: Truncating password for bcrypt compatibility")
-        truncated_password = _truncate_password(password)
-        logger.debug("Password truncated successfully")
+        # Truncate password to 72 bytes if necessary
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            logger.debug(f"Password exceeds 72 bytes ({len(password_bytes)} bytes), truncating")
+            truncated = password_bytes[:72]
+            # Remove incomplete UTF-8 sequences
+            while truncated and (truncated[-1] & 0x80) and not (truncated[-1] & 0x40):
+                truncated = truncated[:-1]
+            password = truncated.decode('utf-8', errors='ignore')
         
-        # Step 2: Verify truncation worked
-        logger.debug("Step 2: Verifying truncation result")
-        truncated_bytes = truncated_password.encode('utf-8')
-        truncated_length = len(truncated_bytes)
-        logger.debug(f"Truncated password byte length: {truncated_length} bytes")
-        
-        if truncated_length > 72:
-            # This should never happen, but log if it does
-            logger.error(f"Password truncation failed: {truncated_length} bytes after truncation (expected <= 72)")
-            raise ValueError(f"Password truncation failed: {truncated_length} bytes after truncation")
-        
-        # Step 3: Hash the password
-        logger.debug("Step 3: Hashing password using bcrypt")
-        try:
-            hashed = pwd_context.hash(truncated_password)
-            logger.debug("Password hashed successfully")
-            return hashed
-        except Exception as e:
-            logger.error(f"Error during password hashing: {str(e)}", exc_info=True)
-            raise ValueError(f"Password hashing failed: {str(e)}")
-            
-    except ValueError as e:
-        logger.error(f"Password hashing validation error: {str(e)}")
-        raise
+        hashed = pwd_context.hash(password)
+        logger.debug("Password hashed successfully")
+        return hashed
     except Exception as e:
-        logger.error(f"Unexpected error during password hashing: {str(e)}", exc_info=True)
+        logger.error(f"Error during password hashing: {str(e)}", exc_info=True)
         raise ValueError(f"Password hashing failed: {str(e)}")
+
+async def authenticate_user(email: str, password: str) -> Optional[User]:
+    """Authenticate a user with email and password"""
+    logger.debug(f"Authenticating user with email: {email}")
+    
+    try:
+        user = await get_user_by_email(email)
+        if not user:
+            logger.warning(f"Authentication failed: User not found with email: {email}")
+            return None
+        
+        if not verify_password(password, user.hashed_password):
+            logger.warning(f"Authentication failed: Invalid password for email: {email}")
+            return None
+        
+        logger.info(f"User authenticated successfully: {email}, ID: {user.id}, role: {user.role}")
+        return user
+    except Exception as e:
+        logger.error(f"Unexpected error during authentication: {str(e)}", exc_info=True)
+        return None
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create a JWT access token"""
@@ -159,8 +113,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
             expire = datetime.utcnow() + expires_delta
             logger.debug(f"Using provided expiration delta: {expires_delta}")
         else:
-            expire = datetime.utcnow() + timedelta(minutes=15)
-            logger.debug("Using default expiration: 15 minutes")
+            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            logger.debug(f"Using default expiration: {ACCESS_TOKEN_EXPIRE_MINUTES} minutes")
         
         logger.debug(f"Token will expire at: {expire}")
         
@@ -243,39 +197,6 @@ async def get_user_by_email(email: str) -> Optional[User]:
             
     except Exception as e:
         logger.error(f"Unexpected error getting user by email: {str(e)}", exc_info=True)
-        return None
-
-async def authenticate_user(email: str, password: str) -> Optional[User]:
-    """Authenticate a user with email and password"""
-    logger.debug(f"Authenticating user with email: {email}")
-    
-    try:
-        # Step 1: Get user by email
-        logger.debug(f"Step 1: Retrieving user by email: {email}")
-        user = await get_user_by_email(email)
-        if not user:
-            logger.warning(f"Authentication failed: User not found with email: {email}")
-            return None
-        logger.debug(f"User found: {email}, ID: {user.id}")
-        
-        # Step 2: Verify password
-        logger.debug("Step 2: Verifying password")
-        try:
-            password_valid = verify_password(password, user.hashed_password)
-            if not password_valid:
-                logger.warning(f"Authentication failed: Invalid password for email: {email}")
-                return None
-            logger.debug("Password verified successfully")
-        except Exception as e:
-            logger.error(f"Error during password verification: {str(e)}", exc_info=True)
-            return None
-        
-        # Step 3: Return authenticated user
-        logger.info(f"User authenticated successfully: {email}, ID: {user.id}, role: {user.role}")
-        return user
-        
-    except Exception as e:
-        logger.error(f"Unexpected error during authentication: {str(e)}", exc_info=True)
         return None
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
