@@ -1,0 +1,38 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # 1. Database Service
+  mongo:
+    image: mongo:latest
+    container_name: consultant_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # 2. Backend Service
+  backend:
+    build: ./backend
+    container_name: consultant_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://mongo:27017/consultant_tracker
+    depends_on:
+      - mongo
+    # Mount code for hot-reloading (optional, remove in true production)
+    volumes:
+      - ./backend:/app
+
+  # 3. Frontend Service
+  frontend:
+    build: ./frontend
+    container_name: consultant_frontend
+    ports:
+      - "3000:80"  # Map your machine's port 3000 to Nginx's port 80
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
