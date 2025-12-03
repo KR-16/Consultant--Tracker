@@ -31,29 +31,40 @@ A simple authentication system with registration and login functionality for thr
 ## Project Structure
 
 ```
-Consultant--Tracker/
+consultant-tracker/
 ├── backend/
 │   ├── app/
-│   │   ├── auth.py          # Authentication utilities (JWT, password hashing)
-│   │   ├── db.py             # Database connection and indexes
-│   │   ├── main.py           # FastAPI application
-│   │   ├── models.py         # Pydantic models (User only)
-│   │   ├── repositories/
-│   │   │   └── users.py      # User repository (CRUD operations)
-│   │   └── routers/
-│   │       └── auth.py       # Authentication endpoints
-│   └── requirements.txt
+│   │   ├── main.py                 # FastAPI application
+│   │   ├── db.py                   # Database configuration
+│   │   ├── models.py               # Pydantic models
+│   │   ├── repositories/           # Data access layer
+│   │   │   ├── consultants.py
+│   │   │   ├── submissions.py
+│   │   │   └── reports.py
+│   │   └── routers/                # API routes
+│   │       ├── consultants.py
+│   │       ├── submissions.py
+│   │       └── reports.py
+│   ├── tests/                      # Unit tests
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── seed_data.py               # Sample data
 ├── frontend/
 │   ├── src/
-│   │   ├── api.js            # API client
-│   │   ├── App.js            # Main app component
-│   │   ├── components/
-│   │   │   └── auth/
-│   │   │       ├── Login.js
-│   │   │       ├── Register.js
-│   │   │       └── ProtectedRoute.js
-│   │   └── contexts/
-│   │       └── AuthContext.js
+│   │   ├── components/            # Reusable components
+│   │   ├── pages/                 # Page components
+│   │   │   ├── Consultants.js
+│   │   │   ├── Submissions.js
+│   │   │   ├── PerConsultant.js
+│   │   │   ├── Availability.js
+│   │   │   └── Reports.js
+│   │   ├── App.js                 # Main app component
+│   │   ├── api.js                 # API client
+│   │   └── index.js               # Entry point
+│   ├── package.json
+│   └── Dockerfile
+├── mongo-init/                    # MongoDB initialization
+├── docker-compose.yml
 └── README.md
 ```
 
