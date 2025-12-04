@@ -9,6 +9,7 @@ const api = axios.create({
   },
 });
 
+// Request Interceptor: Add Token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -22,6 +23,7 @@ api.interceptors.request.use(
   }
 );
 
+// Response Interceptor: Handle Auth Errors
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -31,8 +33,11 @@ api.interceptors.response.use(
       const token = localStorage.getItem('token');
       if (token) {
         localStorage.removeItem('token');
+        // Prevent redirect loop if already on auth pages
         if (!window.location.pathname.includes('/login') && 
-            !window.location.pathname.includes('/register')) {
+            !window.location.pathname.includes('/register') &&
+            !window.location.pathname.includes('/forgot-password') &&
+            !window.location.pathname.includes('/reset-password')) {
           window.location.href = '/login';
         }
       }
@@ -42,16 +47,25 @@ api.interceptors.response.use(
   }
 );
 
-
 export const authAPI = {
-  login: (email, password) => api.post('/auth/login', { email, password }),
+  // Login: Updated to send 'identifier' (email or username)
+  login: (identifier, password) => api.post('/auth/login', { identifier, password }),
+  
   register: (userData) => api.post('/auth/register', userData),
   getCurrentUser: () => api.get('/auth/me'),
   refreshToken: () => api.post('/auth/refresh'),
+  
+  // Forgot Password
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  
+  // Reset Password
+  resetPassword: (token, newPassword) => api.post('/auth/reset-password', { 
+    token, 
+    new_password: newPassword 
+  }),
 };
 
 export const jobAPI = {
-
   getAll: () => api.get('/jobs/'), 
   create: (jobData) => api.post('/jobs/', jobData),
   getOne: (id) => api.get(`/jobs/${id}`),

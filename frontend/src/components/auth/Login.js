@@ -9,65 +9,56 @@ import {
   Box,
   Alert,
   CircularProgress,
+  Grid,
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  
+  // We use 'identifier' to mean it could be Email OR Username
+  const [formData, setFormData] = useState({
+    identifier: '',
+    password: '',
+  });
+  
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!formData.identifier || !formData.password) {
+      setError('Please enter both username/email and password');
+      return;
+    }
+
     setLoading(true);
 
-    const result = await login(email, password);
-    
-    if (result.success) {
-      navigate('/');
-    } else {
-      const errData = result.error;
-      let msg = "Invalid email or password";
+    // Call login with the identifier
+    const result = await login(formData.identifier, formData.password);
 
-      if (errData) {
-    
-        if (typeof errData === 'string') {
-           msg = errData;
-        }
-        else if (Array.isArray(errData) && errData.length > 0) {
-           const firstError = errData[0]
-           if (firstError.loc && firstError.loc.includes('email')) {
-               msg = "Invalid email address";
-           } else {
-               msg = firstError.msg; 
-           }
-        }
-        else if (errData.detail) {
-           if (Array.isArray(errData.detail)) {
-             const firstDetail = errData.detail[0];
-             if (firstDetail.loc && firstDetail.loc.includes('email')) {
-               msg = "Invalid email address";
-             } else {
-               msg = firstDetail.msg;
-             }
-           } else {
-             msg = errData.detail;
-           }
-        }
-      }
-      
-      setError(msg);
+    if (result.success) {
+      navigate('/'); // Redirect to dashboard
+    } else {
+      setError(result.error || 'Failed to login. Please check your credentials.');
     }
-    
+
     setLoading(false);
   };
 
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth="xs">
       <Box
         sx={{
           marginTop: 8,
@@ -77,6 +68,7 @@ const Login = () => {
         }}
       >
         <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+          {/* Updated Title */}
           <Typography variant="h4" component="h1" gutterBottom align="center">
             Consultant Tracker
           </Typography>
@@ -95,13 +87,13 @@ const Login = () => {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
+              id="identifier"
+              label="Email Address or Username"
+              name="identifier"
+              autoComplete="username"
               autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.identifier}
+              onChange={handleChange}
               disabled={loading}
             />
             <TextField
@@ -113,10 +105,11 @@ const Login = () => {
               type="password"
               id="password"
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={handleChange}
               disabled={loading}
             />
+            
             <Button
               type="submit"
               fullWidth
@@ -124,16 +117,21 @@ const Login = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : 'Sign In'}
+              {loading ? <CircularProgress size={24} /> : 'SIGN IN'}
             </Button>
-            <Box textAlign="center">
-              <Typography variant="body2">
-                Don't have an account?{' '}
-                <Link to="/register" style={{ textDecoration: 'none' }}>
-                  Sign up
+
+            <Grid container>
+              <Grid item xs>
+                <Link to="/forgot-password" style={{ textDecoration: 'none', color: '#1976d2', fontSize: '0.875rem' }}>
+                  Forgot password?
                 </Link>
-              </Typography>
-            </Box>
+              </Grid>
+              <Grid item>
+                <Link to="/register" style={{ textDecoration: 'none', color: '#1976d2', fontSize: '0.875rem' }}>
+                  {"Don't have an account? Sign Up"}
+                </Link>
+              </Grid>
+            </Grid>
           </Box>
         </Paper>
       </Box>

@@ -13,12 +13,20 @@ import {
   Select,
   FormControl,
   InputLabel,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
+  
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -26,9 +34,16 @@ const Register = () => {
     confirmPassword: '',
     role: 'CONSULTANT',
   });
+  
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [passwordByteLength, setPasswordByteLength] = useState(0);
+
+  // Password Rules for Display
+  const passwordRules = [
+    { label: "At least 6 characters", valid: formData.password.length >= 6 },
+    { label: "At least one number", valid: /\d/.test(formData.password) },
+    { label: "At least one special char (!@#$)", valid: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) },
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,35 +51,46 @@ const Register = () => {
       ...formData,
       [name]: value,
     });
-  
-    if (name === 'password') {
-      const bytes = new TextEncoder().encode(value);
-      setPasswordByteLength(bytes.length);
-    }
+  };
+
+  const validateEmail = (email) => {
+    return String(email)
+      .toLowerCase()
+      .match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
+    // --- 1. Client-Side Validation ---
+
+    // Name Validation (Min 5 chars)
+    if (formData.name.trim().length < 5) {
+      setError('Full Name (Username) must be at least 5 characters long');
+      return;
+    }
+
+    // Email Validation
+    if (!validateEmail(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    // Password Matching
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Password Strength Check (Double check before submitting)
+    const isStrong = passwordRules.every(rule => rule.valid);
+    if (!isStrong) {
+      setError('Please meet all password requirements listed below');
       return;
     }
 
-    const passwordBytes = new TextEncoder().encode(formData.password);
-    if (passwordBytes.length > 72) {
-      setError(
-        `Password is too long (${passwordBytes.length} bytes). Maximum 72 bytes allowed.`
-      );
-      return;
-    }
-
+    // --- 2. Submit to Backend ---
     setLoading(true);
 
     const { confirmPassword, ...registerData } = formData;
@@ -73,12 +99,13 @@ const Register = () => {
     if (result.success) {
       navigate('/login');
     } else {
+      // Handle Backend Errors (e.g., "User already exists")
       const errData = result.error;
       let msg = "Registration failed";
 
       if (errData) {
         if (typeof errData === 'string') {
-           msg = errData;
+           msg = errData; // Likely "Email already registered"
         }
         else if (Array.isArray(errData) && errData.length > 0) {
            const firstError = errData[0];
@@ -89,16 +116,7 @@ const Register = () => {
            }
         }
         else if (errData.detail) {
-           if (Array.isArray(errData.detail)) {
-             const firstDetail = errData.detail[0];
-             if (firstDetail.loc && firstDetail.loc.includes('email')) {
-               msg = "Invalid email address";
-             } else {
-               msg = firstDetail.msg;
-             }
-           } else {
-             msg = errData.detail;
-           }
+             msg = typeof errData.detail === 'string' ? errData.detail : JSON.stringify(errData.detail);
         }
       }
       
@@ -138,13 +156,14 @@ const Register = () => {
               required
               fullWidth
               id="name"
-              label="Full Name"
+              label="Full Name / Username"
               name="name"
               autoComplete="name"
               autoFocus
               value={formData.name}
               onChange={handleChange}
               disabled={loading}
+              helperText="Minimum 5 characters"
             />
             <TextField
               margin="normal"
@@ -174,6 +193,7 @@ const Register = () => {
                 <MenuItem value="ADMIN">Admin</MenuItem>
               </Select>
             </FormControl>
+
             <TextField
               margin="normal"
               required
@@ -186,8 +206,37 @@ const Register = () => {
               value={formData.password}
               onChange={handleChange}
               disabled={loading}
-              helperText={passwordByteLength > 0 ? `${passwordByteLength}/72 bytes` : ''}
             />
+
+            {/* PASSWORD REQUIREMENTS UI */}
+            <Box sx={{ mt: 1, mb: 2, p: 1, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+              <Typography variant="caption" sx={{ fontWeight: 'bold', ml: 1 }}>
+                Password Requirements:
+              </Typography>
+              <List dense sx={{ py: 0 }}>
+                {passwordRules.map((rule, index) => (
+                  <ListItem key={index} sx={{ py: 0 }}>
+                    <ListItemIcon sx={{ minWidth: 24 }}>
+                       {formData.password.length > 0 ? (
+                          rule.valid ? 
+                            <CheckCircleOutlineIcon fontSize="small" color="success" /> : 
+                            <HighlightOffIcon fontSize="small" color="error" />
+                       ) : (
+                          <FiberManualRecordIcon fontSize="small" color="disabled" style={{ fontSize: 10 }} />
+                       )}
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={rule.label} 
+                      primaryTypographyProps={{ 
+                        variant: 'caption', 
+                        color: formData.password.length > 0 ? (rule.valid ? 'success.main' : 'error.main') : 'text.secondary'
+                      }} 
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+
             <TextField
               margin="normal"
               required

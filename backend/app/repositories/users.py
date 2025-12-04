@@ -5,7 +5,6 @@ from bson.errors import InvalidId
 from pymongo.errors import PyMongoError, DuplicateKeyError
 import logging
 from app.models import User, UserCreate, UserUpdate, UserRole
-from app.auth import get_password_hash
 from app.db import get_database
 
 # Set up logger
@@ -19,6 +18,9 @@ class UserRepository:
     async def create(self, user_data: UserCreate) -> User:
         """Create a new user"""
         logger.info(f"Starting user creation for email: {user_data.email}, role: {user_data.role}")
+        
+      
+        from app.auth import get_password_hash
         
         try:
             # Step 1: Get database connection

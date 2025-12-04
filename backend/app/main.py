@@ -165,7 +165,6 @@ async def health_check():
     logger.debug("Health check endpoint accessed")
     
     try:
-        # You could add more health checks here (database, external services, etc.)
         logger.debug("Performing health check")
         
         response = {"status": "healthy"}
