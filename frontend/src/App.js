@@ -4,7 +4,6 @@ import {
   AppBar,
   Toolbar,
   Typography,
-  Container,
   Box,
   Button,
   Avatar,
@@ -29,63 +28,6 @@ const Home = () => {
     return <Navigate to="/recruiter/dashboard" replace />;
   }
   return <Navigate to="/login" replace />;
-};
-
-// Simple Dashboard component (Legacy, can be removed later)
-const Dashboard = () => {
-  const { user, logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    window.location.href = '/login';
-  };
-
-  return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 3,
-        }}
-      >
-        <Typography variant="h4" component="h1" gutterBottom>
-          Welcome, {user?.name}!
-        </Typography>
-        <Box
-          sx={{
-            p: 3,
-            border: '1px solid #e0e0e0',
-            borderRadius: 2,
-            width: '100%',
-            maxWidth: 500,
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            User Information
-          </Typography>
-          <Typography variant="body1">
-            <strong>Email:</strong> {user?.email}
-          </Typography>
-          <Typography variant="body1">
-            <strong>Role:</strong> {user?.role}
-          </Typography>
-          <Typography variant="body1">
-            <strong>Status:</strong> {user?.is_active ? 'Active' : 'Inactive'}
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          color="error"
-          startIcon={<LogoutIcon />}
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
-      </Box>
-    </Container>
-  );
 };
 
 function App() {
