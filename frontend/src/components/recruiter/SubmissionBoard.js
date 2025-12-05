@@ -101,43 +101,51 @@ const SubmissionBoard = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {submissions.map((sub) => (
-                            <TableRow key={sub.id} sx={{ bgcolor: sub.recruiter_read ? 'inherit' : 'action.hover' }}>
-                                <TableCell>{sub.consultant_name || 'Unknown'}</TableCell>
-                                <TableCell>{sub.jd_title || 'Unknown Job'}</TableCell>
-                                <TableCell>{format(new Date(sub.created_at), 'MMM dd, yyyy')}</TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={sub.status}
-                                        color={getStatusColor(sub.status)}
-                                        size="small"
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    {/* In a real app, this would be a link to download/view the file */}
-                                    <Button
-                                        size="small"
-                                        variant="outlined"
-                                        href="#" // Placeholder
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            alert(`Resume path: ${sub.resume_path}\n(File download not implemented in this demo)`);
-                                        }}
-                                    >
-                                        View Resume
-                                    </Button>
-                                </TableCell>
-                                <TableCell>
-                                    <Button
-                                        size="small"
-                                        onClick={(e) => handleMenuOpen(e, sub)}
-                                        endIcon={<MoreIcon />}
-                                    >
-                                        Update
-                                    </Button>
+                        {submissions.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={6} align="center">
+                                    No submissions found.
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            submissions.map((sub) => (
+                                <TableRow key={sub.id} sx={{ bgcolor: sub.recruiter_read ? 'inherit' : 'action.hover' }}>
+                                    <TableCell>{sub.consultant_name || 'Unknown'}</TableCell>
+                                    <TableCell>{sub.jd_title || 'Unknown Job'}</TableCell>
+                                    <TableCell>{format(new Date(sub.created_at), 'MMM dd, yyyy')}</TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={sub.status}
+                                            color={getStatusColor(sub.status)}
+                                            size="small"
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        {/* In a real app, this would be a link to download/view the file */}
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            href="#" // Placeholder
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                alert(`Resume path: ${sub.resume_path}\n(File download not implemented in this demo)`);
+                                            }}
+                                        >
+                                            View Resume
+                                        </Button>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button
+                                            size="small"
+                                            onClick={(e) => handleMenuOpen(e, sub)}
+                                            endIcon={<MoreIcon />}
+                                        >
+                                            Update
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>

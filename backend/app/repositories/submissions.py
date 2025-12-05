@@ -66,9 +66,18 @@ class SubmissionRepository:
             async for doc in cursor:
                 doc["id"] = str(doc["_id"])
                 # Fetch JD title
-                jd = await db.job_descriptions.find_one({"_id": ObjectId(doc["jd_id"])})
-                if jd:
-                    doc["jd_title"] = jd.get("title")
+                try:
+                    jd = await db.job_descriptions.find_one({"_id": ObjectId(doc["jd_id"])})
+                    if jd:
+                        doc["jd_title"] = jd.get("title", "Unknown Job")
+                    else:
+                        doc["jd_title"] = "Unknown Job"
+                except (InvalidId, TypeError) as e:
+                    logger.warning(f"Invalid jd_id format in submission {doc['id']}: {doc.get('jd_id')}")
+                    doc["jd_title"] = "Unknown Job"
+                except Exception as e:
+                    logger.error(f"Error fetching JD for submission {doc['id']}: {str(e)}")
+                    doc["jd_title"] = "Unknown Job"
                 submissions.append(Submission(**doc))
                 
             return submissions
@@ -93,18 +102,34 @@ class SubmissionRepository:
             
             async for doc in cursor:
                 doc["id"] = str(doc["_id"])
-                # Fetch consultant name
-                consultant_user = await db.users.find_one({"_id": ObjectId(doc["consultant_id"])}) # consultant_id is user_id in this context? No, it's consultant profile ID usually.
-                # Wait, consultant_id in submission should probably be the user_id of the consultant for easier linking?
-                # Let's assume consultant_id is the user_id of the consultant.
-                
-                if consultant_user:
-                     doc["consultant_name"] = consultant_user.get("name")
+                # Fetch consultant name from users collection
+                # consultant_id in submission is the user_id of the consultant
+                try:
+                    consultant_user = await db.users.find_one({"_id": ObjectId(doc["consultant_id"])})
+                    if consultant_user:
+                        doc["consultant_name"] = consultant_user.get("name", "Unknown")
+                    else:
+                        doc["consultant_name"] = "Unknown"
+                except (InvalidId, TypeError) as e:
+                    logger.warning(f"Invalid consultant_id format in submission {doc['id']}: {doc.get('consultant_id')}")
+                    doc["consultant_name"] = "Unknown"
+                except Exception as e:
+                    logger.error(f"Error fetching consultant user for submission {doc['id']}: {str(e)}")
+                    doc["consultant_name"] = "Unknown"
                 
                 # Fetch JD title
-                jd = await db.job_descriptions.find_one({"_id": ObjectId(doc["jd_id"])})
-                if jd:
-                    doc["jd_title"] = jd.get("title")
+                try:
+                    jd = await db.job_descriptions.find_one({"_id": ObjectId(doc["jd_id"])})
+                    if jd:
+                        doc["jd_title"] = jd.get("title", "Unknown Job")
+                    else:
+                        doc["jd_title"] = "Unknown Job"
+                except (InvalidId, TypeError) as e:
+                    logger.warning(f"Invalid jd_id format in submission {doc['id']}: {doc.get('jd_id')}")
+                    doc["jd_title"] = "Unknown Job"
+                except Exception as e:
+                    logger.error(f"Error fetching JD for submission {doc['id']}: {str(e)}")
+                    doc["jd_title"] = "Unknown Job"
                     
                 submissions.append(Submission(**doc))
                 
@@ -168,7 +193,40 @@ class SubmissionRepository:
             doc = await db.submissions.find_one({"_id": ObjectId(submission_id)})
             if doc:
                 doc["id"] = str(doc["_id"])
+                
+                # Fetch consultant name from users collection
+                try:
+                    consultant_user = await db.users.find_one({"_id": ObjectId(doc["consultant_id"])})
+                    if consultant_user:
+                        doc["consultant_name"] = consultant_user.get("name", "Unknown")
+                    else:
+                        doc["consultant_name"] = "Unknown"
+                except (InvalidId, TypeError) as e:
+                    logger.warning(f"Invalid consultant_id format in submission {submission_id}: {doc.get('consultant_id')}")
+                    doc["consultant_name"] = "Unknown"
+                except Exception as e:
+                    logger.error(f"Error fetching consultant user for submission {submission_id}: {str(e)}")
+                    doc["consultant_name"] = "Unknown"
+                
+                # Fetch JD title
+                try:
+                    jd = await db.job_descriptions.find_one({"_id": ObjectId(doc["jd_id"])})
+                    if jd:
+                        doc["jd_title"] = jd.get("title", "Unknown Job")
+                    else:
+                        doc["jd_title"] = "Unknown Job"
+                except (InvalidId, TypeError) as e:
+                    logger.warning(f"Invalid jd_id format in submission {submission_id}: {doc.get('jd_id')}")
+                    doc["jd_title"] = "Unknown Job"
+                except Exception as e:
+                    logger.error(f"Error fetching JD for submission {submission_id}: {str(e)}")
+                    doc["jd_title"] = "Unknown Job"
+                
                 return Submission(**doc)
             return None
-        except Exception:
+        except (InvalidId, TypeError) as e:
+            logger.error(f"Invalid submission_id format: {submission_id}")
+            return None
+        except Exception as e:
+            logger.error(f"Error getting submission by ID: {str(e)}", exc_info=True)
             return None

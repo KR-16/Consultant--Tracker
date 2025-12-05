@@ -2,15 +2,20 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from typing import List, Optional
 import shutil
 import os
+import logging
 from pathlib import Path
-from app.models import User, UserRole, Submission, SubmissionCreate, SubmissionUpdate, SubmissionStatus
+from app.models import User, UserRole, Submission, SubmissionCreate, SubmissionUpdate, SubmissionStatus, ConsultantProfileUpdate
 from app.auth import get_current_user, require_recruiter_or_admin, require_role
 from app.repositories.submissions import SubmissionRepository
 from app.repositories.jobs import JobRepository
+from app.repositories.consultants import ConsultantRepository
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 repo = SubmissionRepository()
 job_repo = JobRepository()
+consultant_repo = ConsultantRepository()
 
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -31,6 +36,19 @@ async def create_submission(
     if jd.status != "OPEN":
         raise HTTPException(status_code=400, detail="Job is not open for applications")
 
+    # Ensure consultant profile exists (auto-create if it doesn't)
+    try:
+        profile = await consultant_repo.get_by_user_id(current_user.id)
+        if not profile:
+            # Auto-create a basic profile for the consultant
+            await consultant_repo.create_or_update(
+                current_user.id, 
+                ConsultantProfileUpdate(experience_years=0.0)
+            )
+    except Exception as e:
+        logger.warning(f"Could not ensure consultant profile exists: {str(e)}")
+        # Continue anyway - profile creation is not critical for submission
+    
     # Save resume
     try:
         file_ext = os.path.splitext(resume.filename)[1]
@@ -55,10 +73,10 @@ async def get_all_submissions(
     current_user: User = Depends(require_recruiter_or_admin)
 ):
     """Get all submissions (Recruiter only)"""
-    # If admin, see all. If recruiter, see only for their JDs?
-    # Requirement says "See all submissions (for all consultants & all JDs)" for Recruiter.
-    # But usually recruiters only see their own. The prompt says "See all submissions".
-    # Let's assume they can see all for now as per prompt "See all submissions".
+    # If admin, see all. If recruiter, see only submissions for their own jobs
+    if current_user.role == UserRole.RECRUITER:
+        return await repo.get_all(recruiter_id=current_user.id)
+    # Admin sees all
     return await repo.get_all() 
 
 @router.put("/{submission_id}/status", response_model=Submission)

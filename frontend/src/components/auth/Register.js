@@ -13,7 +13,10 @@ import {
   Select,
   FormControl,
   InputLabel,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Register = () => {
@@ -29,6 +32,16 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [passwordByteLength, setPasswordByteLength] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleClickShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -180,13 +193,27 @@ const Register = () => {
               fullWidth
               name="password"
               label="Password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="new-password"
               value={formData.password}
               onChange={handleChange}
               disabled={loading}
               helperText={passwordByteLength > 0 ? `${passwordByteLength}/72 bytes` : ''}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      edge="end"
+                      disabled={loading}
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <TextField
               margin="normal"
@@ -194,11 +221,25 @@ const Register = () => {
               fullWidth
               name="confirmPassword"
               label="Confirm Password"
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               id="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
               disabled={loading}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle confirm password visibility"
+                      onClick={handleClickShowConfirmPassword}
+                      edge="end"
+                      disabled={loading}
+                    >
+                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <Button
               type="submit"

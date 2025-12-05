@@ -9,7 +9,10 @@ import {
   Box,
   Alert,
   CircularProgress,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Login = () => {
@@ -19,6 +22,11 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,12 +118,26 @@ const Login = () => {
               fullWidth
               name="password"
               label="Password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      edge="end"
+                      disabled={loading}
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <Button
               type="submit"

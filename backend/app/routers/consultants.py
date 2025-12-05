@@ -40,28 +40,12 @@ async def get_all_consultants(
     """
     Get consultants.
     - If ADMIN: Returns all consultants.
-    - If RECRUITER: Returns ONLY consultants who have applied to your jobs.
+    - If RECRUITER: Returns ALL consultants (not filtered by applications).
+    - Submissions tab shows only consultants who have applied to recruiter's jobs.
     """
-    filter_ids = None
-
-    if current_user.role == UserRole.RECRUITER:
-        db = await get_database()
-        
-        my_jobs_cursor = db.job_descriptions.find({"recruiter_id": str(current_user.id)}, {"_id": 1})
-        my_job_ids = [str(doc["_id"]) async for doc in my_jobs_cursor]
-        
-        if not my_job_ids:
-            return [] 
-            
-        submissions_cursor = db.submissions.find({"jd_id": {"$in": my_job_ids}}, {"consultant_id": 1})
-        
-        applicant_ids = {doc["consultant_id"] async for doc in submissions_cursor}
-        filter_ids = list(applicant_ids)
-       
-        if not filter_ids:
-            return []
-
-    return await repo.get_all(skip, limit, user_ids=filter_ids)
+    # Recruiters see all consultants in the consultants tab
+    # Submissions are filtered separately in the submissions endpoint
+    return await repo.get_all(skip, limit, user_ids=None)
 
 @router.get("/{user_id}", response_model=ConsultantProfile)
 async def get_consultant_profile(
