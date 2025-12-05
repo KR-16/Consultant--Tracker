@@ -31,41 +31,62 @@ A simple authentication system with registration and login functionality for thr
 ## Project Structure
 
 ```
-consultant-tracker/
-├── backend/
-│   ├── app/
-│   │   ├── main.py                 # FastAPI application
-│   │   ├── db.py                   # Database configuration
-│   │   ├── models.py               # Pydantic models
-│   │   ├── repositories/           # Data access layer
-│   │   │   ├── consultants.py
-│   │   │   ├── submissions.py
-│   │   │   └── reports.py
-│   │   └── routers/                # API routes
-│   │       ├── consultants.py
-│   │       ├── submissions.py
-│   │       └── reports.py
-│   ├── tests/                      # Unit tests
-│   ├── requirements.txt
+Consultant--Tracker
+├── README.md
+├── backend
 │   ├── Dockerfile
-│   └── seed_data.py               # Sample data
-├── frontend/
-│   ├── src/
-│   │   ├── components/            # Reusable components
-│   │   ├── pages/                 # Page components
-│   │   │   ├── Consultants.js
-│   │   │   ├── Submissions.js
-│   │   │   ├── PerConsultant.js
-│   │   │   ├── Availability.js
-│   │   │   └── Reports.js
-│   │   ├── App.js                 # Main app component
-│   │   ├── api.js                 # API client
-│   │   └── index.js               # Entry point
-│   ├── package.json
-│   └── Dockerfile
-├── mongo-init/                    # MongoDB initialization
+│   ├── app
+│   │   ├── auth.py
+│   │   ├── db.py
+│   │   ├── main.py
+│   │   ├── models.py
+│   │   ├── repositories
+│   │   │   ├── consultants.py
+│   │   │   ├── jobs.py
+│   │   │   ├── submissions.py
+│   │   │   └── users.py
+│   │   └── routers
+│   │       ├── auth.py
+│   │       ├── consultants.py
+│   │       ├── jobs.py
+│   │       └── submissions.py
+│   ├── requirements.txt
+│   └── uploads
 ├── docker-compose.yml
-└── README.md
+├── frontend
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public
+│   │   ├── index.html
+│   │   ├── manifest.json
+│   │   └── robots.txt
+│   └── src
+│       ├── App.js
+│       ├── api.js
+│       ├── components
+│       │   ├── auth
+│       │   │   ├── ForgotPassword.js
+│       │   │   ├── Login.js
+│       │   │   ├── ProtectedRoute.js
+│       │   │   ├── Register.js
+│       │   │   └── ResetPassword.js
+│       │   ├── consultant
+│       │   │   ├── ConsultantApplications.js
+│       │   │   ├── ConsultantDashboard.js
+│       │   │   ├── ConsultantJobs.js
+│       │   │   └── ConsultantProfile.js
+│       │   └── recruiter
+│       │       ├── ConsultantList.js
+│       │       ├── JobManager.js
+│       │       ├── RecruiterDashboard.js
+│       │       └── SubmissionBoard.js
+│       ├── contexts
+│       │   └── AuthContext.js
+│       └── index.js
+└── mongo-init
+    └── init-db.js
 ```
 
 ## Setup Instructions
