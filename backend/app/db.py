@@ -4,6 +4,7 @@ from pymongo.errors import PyMongoError, ConnectionFailure, ServerSelectionTimeo
 import os
 import logging
 from typing import Optional
+from app.schemas import get_all_schemas
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -109,8 +110,14 @@ async def init_db():
         raise ConnectionFailure(f"Database initialization failed: {str(e)}")
 
 async def create_indexes():
-    """Create database indexes for users"""
-    logger.info("Creating database indexes")
+    """
+    Create database indexes for all registered collections using the schema registry.
+    
+    This function automatically discovers all registered collection schemas and
+    creates their indexes. To add indexes for a new collection, simply create
+    a new schema file in app/schemas/ and import it in app/schemas/__init__.py
+    """
+    logger.info("Creating database indexes for all registered collections")
     
     try:
         # Step 1: Verify database is available
@@ -120,53 +127,48 @@ async def create_indexes():
             raise ValueError("Database not initialized")
         logger.debug("Database verified")
         
-        # Step 2: Create email index (unique)
-        logger.debug("Step 2: Creating email index (unique)")
-        try:
-            result = await db.database.users.create_index("email", unique=True)
-            logger.info(f"Email index created successfully: {result}")
-        except PyMongoError as e:
-            # Index might already exist - check error
-            if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
-                logger.debug("Email index already exists - skipping")
-            else:
-                logger.error(f"Error creating email index: {str(e)}", exc_info=True)
-                raise
-        except Exception as e:
-            logger.error(f"Unexpected error creating email index: {str(e)}", exc_info=True)
-            raise
+        # Step 2: Get all registered schemas
+        logger.debug("Step 2: Getting all registered schemas")
+        schemas = get_all_schemas()
+        logger.info(f"Found {len(schemas)} registered schema(s)")
         
-        # Step 3: Create role index
-        logger.debug("Step 3: Creating role index")
-        try:
-            result = await db.database.users.create_index("role")
-            logger.info(f"Role index created successfully: {result}")
-        except PyMongoError as e:
-            if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
-                logger.debug("Role index already exists - skipping")
-            else:
-                logger.error(f"Error creating role index: {str(e)}", exc_info=True)
-                raise
-        except Exception as e:
-            logger.error(f"Unexpected error creating role index: {str(e)}", exc_info=True)
-            raise
+        if not schemas:
+            logger.warning("No schemas registered - no indexes will be created")
+            return
         
-        # Step 4: Create is_active index
-        logger.debug("Step 4: Creating is_active index")
-        try:
-            result = await db.database.users.create_index("is_active")
-            logger.info(f"Is_active index created successfully: {result}")
-        except PyMongoError as e:
-            if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
-                logger.debug("Is_active index already exists - skipping")
-            else:
-                logger.error(f"Error creating is_active index: {str(e)}", exc_info=True)
-                raise
-        except Exception as e:
-            logger.error(f"Unexpected error creating is_active index: {str(e)}", exc_info=True)
-            raise
+        # Step 3: Create indexes for each schema
+        logger.debug("Step 3: Creating indexes for each registered schema")
+        successful_schemas = []
+        failed_schemas = []
         
-        logger.info("All database indexes created successfully")
+        for schema_class in schemas:
+            collection_name = schema_class.get_collection_name()
+            schema_name = schema_class.__name__
+            
+            try:
+                logger.debug(f"Creating indexes for schema: {schema_name} (collection: {collection_name})")
+                await schema_class.create_indexes(db.database)
+                successful_schemas.append(schema_name)
+                logger.info(f"Successfully created indexes for schema: {schema_name}")
+            except Exception as e:
+                failed_schemas.append((schema_name, str(e)))
+                logger.error(f"Failed to create indexes for schema {schema_name}: {str(e)}", exc_info=True)
+                # Continue with other schemas even if one fails
+                continue
+        
+        # Step 4: Log summary
+        logger.info(f"Index creation completed: {len(successful_schemas)} successful, {len(failed_schemas)} failed")
+        
+        if successful_schemas:
+            logger.info(f"Successfully created indexes for: {', '.join(successful_schemas)}")
+        
+        if failed_schemas:
+            logger.warning(f"Failed to create indexes for: {', '.join([name for name, _ in failed_schemas])}")
+            # Raise an error if any schema failed, but include details about which ones succeeded
+            error_details = "; ".join([f"{name}: {error}" for name, error in failed_schemas])
+            raise ValueError(f"Index creation failed for some schemas: {error_details}")
+        
+        logger.info("All database indexes created successfully for all registered collections")
         
     except ValueError as e:
         logger.error(f"Index creation validation error: {str(e)}")
