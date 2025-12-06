@@ -320,6 +320,8 @@ class JobDescription(JobDescriptionBase):
     recruiter_id: str
     created_at: datetime
     updated_at: datetime
+    recruiter_name: Optional[str] = None
+    recruiter_email: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -356,7 +358,14 @@ class Submission(SubmissionBase):
     created_at: datetime
     updated_at: datetime
     consultant_name: Optional[str] = None
+    consultant_email: Optional[str] = None
     jd_title: Optional[str] = None
+    jd_location: Optional[str] = None
+    jd_experience_required: Optional[float] = None
+    jd_tech_required: Optional[List[str]] = None
+    jd_description: Optional[str] = None
+    jd_recruiter_name: Optional[str] = None
+    jd_recruiter_email: Optional[str] = None
     
     class Config:
         from_attributes = True

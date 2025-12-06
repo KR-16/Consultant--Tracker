@@ -14,6 +14,41 @@ class JobRepository:
         self.collection_name = "job_descriptions"
         logger.debug(f"JobRepository initialized")
 
+    async def _merge_recruiter_data(self, jd_doc, db):
+        """Helper to fetch and merge recruiter details into job description"""
+        try:
+            recruiter_id = jd_doc.get("recruiter_id")
+            if not recruiter_id:
+                logger.warning(f"Job {jd_doc.get('_id')} has no recruiter_id")
+                jd_doc["recruiter_name"] = "Unknown Recruiter"
+                jd_doc["recruiter_email"] = "N/A"
+                return jd_doc
+
+            try:
+                oid = ObjectId(recruiter_id)
+            except (InvalidId, TypeError):
+                logger.error(f"Invalid recruiter_id format: {recruiter_id}")
+                jd_doc["recruiter_name"] = "Invalid ID"
+                jd_doc["recruiter_email"] = "N/A"
+                return jd_doc
+
+            user_data = await db.users.find_one({"_id": oid})
+
+            if user_data:
+                jd_doc["recruiter_name"] = user_data.get("name", "Unknown")
+                jd_doc["recruiter_email"] = user_data.get("email", "")
+            else:
+                logger.warning(f"User not found for recruiter_id: {recruiter_id}")
+                jd_doc["recruiter_name"] = "Unknown Recruiter"
+                jd_doc["recruiter_email"] = "N/A"
+
+        except Exception as e:
+            logger.error(f"Error merging recruiter data: {e}")
+            jd_doc["recruiter_name"] = "Error Loading Recruiter"
+            jd_doc["recruiter_email"] = "N/A"
+
+        return jd_doc
+
     async def create(self, jd_data: JobDescriptionCreate, recruiter_id: str) -> JobDescription:
         """Create a new job description"""
         logger.info(f"Creating new JD: {jd_data.title}")
@@ -36,7 +71,7 @@ class JobRepository:
             raise
 
     async def get_all(self, skip: int = 0, limit: int = 100, status: Optional[str] = None) -> List[JobDescription]:
-        """Get all JDs"""
+        """Get all JDs with recruiter information"""
         logger.debug(f"Getting all JDs")
         try:
             db = await get_database()
@@ -52,6 +87,7 @@ class JobRepository:
             
             async for doc in cursor:
                 doc["id"] = str(doc["_id"])
+                doc = await self._merge_recruiter_data(doc, db)
                 jds.append(JobDescription(**doc))
                 
             return jds

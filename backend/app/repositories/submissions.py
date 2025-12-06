@@ -86,7 +86,7 @@ class SubmissionRepository:
             raise
 
     async def get_all(self, recruiter_id: Optional[str] = None) -> List[Submission]:
-        """Get all submissions (optionally filtered by recruiter)"""
+        """Get all submissions with full JD and recruiter details (optionally filtered by recruiter)"""
         logger.debug(f"Getting all submissions (recruiter_id: {recruiter_id})")
         try:
             db = await get_database()
@@ -102,34 +102,78 @@ class SubmissionRepository:
             
             async for doc in cursor:
                 doc["id"] = str(doc["_id"])
-                # Fetch consultant name from users collection
-                # consultant_id in submission is the user_id of the consultant
+                
+                # Fetch consultant name and email from users collection
                 try:
                     consultant_user = await db.users.find_one({"_id": ObjectId(doc["consultant_id"])})
                     if consultant_user:
                         doc["consultant_name"] = consultant_user.get("name", "Unknown")
+                        doc["consultant_email"] = consultant_user.get("email", "")
                     else:
                         doc["consultant_name"] = "Unknown"
+                        doc["consultant_email"] = ""
                 except (InvalidId, TypeError) as e:
                     logger.warning(f"Invalid consultant_id format in submission {doc['id']}: {doc.get('consultant_id')}")
                     doc["consultant_name"] = "Unknown"
+                    doc["consultant_email"] = ""
                 except Exception as e:
                     logger.error(f"Error fetching consultant user for submission {doc['id']}: {str(e)}")
                     doc["consultant_name"] = "Unknown"
+                    doc["consultant_email"] = ""
                 
-                # Fetch JD title
+                # Fetch full JD details and recruiter information
                 try:
                     jd = await db.job_descriptions.find_one({"_id": ObjectId(doc["jd_id"])})
                     if jd:
                         doc["jd_title"] = jd.get("title", "Unknown Job")
+                        doc["jd_location"] = jd.get("location", "")
+                        doc["jd_experience_required"] = jd.get("experience_required", 0)
+                        doc["jd_tech_required"] = jd.get("tech_required", [])
+                        doc["jd_description"] = jd.get("description", "")
+                        
+                        # Fetch recruiter who posted the JD
+                        jd_recruiter_id = jd.get("recruiter_id")
+                        if jd_recruiter_id:
+                            try:
+                                recruiter_user = await db.users.find_one({"_id": ObjectId(jd_recruiter_id)})
+                                if recruiter_user:
+                                    doc["jd_recruiter_name"] = recruiter_user.get("name", "Unknown")
+                                    doc["jd_recruiter_email"] = recruiter_user.get("email", "")
+                                else:
+                                    doc["jd_recruiter_name"] = "Unknown Recruiter"
+                                    doc["jd_recruiter_email"] = ""
+                            except (InvalidId, TypeError):
+                                doc["jd_recruiter_name"] = "Unknown Recruiter"
+                                doc["jd_recruiter_email"] = ""
+                        else:
+                            doc["jd_recruiter_name"] = "Unknown Recruiter"
+                            doc["jd_recruiter_email"] = ""
                     else:
                         doc["jd_title"] = "Unknown Job"
+                        doc["jd_location"] = ""
+                        doc["jd_experience_required"] = 0
+                        doc["jd_tech_required"] = []
+                        doc["jd_description"] = ""
+                        doc["jd_recruiter_name"] = "Unknown Recruiter"
+                        doc["jd_recruiter_email"] = ""
                 except (InvalidId, TypeError) as e:
                     logger.warning(f"Invalid jd_id format in submission {doc['id']}: {doc.get('jd_id')}")
                     doc["jd_title"] = "Unknown Job"
+                    doc["jd_location"] = ""
+                    doc["jd_experience_required"] = 0
+                    doc["jd_tech_required"] = []
+                    doc["jd_description"] = ""
+                    doc["jd_recruiter_name"] = "Unknown Recruiter"
+                    doc["jd_recruiter_email"] = ""
                 except Exception as e:
                     logger.error(f"Error fetching JD for submission {doc['id']}: {str(e)}")
                     doc["jd_title"] = "Unknown Job"
+                    doc["jd_location"] = ""
+                    doc["jd_experience_required"] = 0
+                    doc["jd_tech_required"] = []
+                    doc["jd_description"] = ""
+                    doc["jd_recruiter_name"] = "Unknown Recruiter"
+                    doc["jd_recruiter_email"] = ""
                     
                 submissions.append(Submission(**doc))
                 

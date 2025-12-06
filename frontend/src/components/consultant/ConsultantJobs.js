@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Briefcase, Upload, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { MapPin, Briefcase, Upload, Loader2, CheckCircle2, AlertCircle, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -112,7 +112,15 @@ const ConsultantJobs = () => {
                     <Card key={job.id} className="hover:shadow-lg transition-shadow">
                         <CardHeader>
                             <div className="flex justify-between items-start">
-                                <CardTitle className="text-lg">{job.title}</CardTitle>
+                                <div>
+                                    <CardTitle className="text-lg">{job.title}</CardTitle>
+                                    {job.recruiter_name && (
+                                        <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+                                            <User className="h-3 w-3" />
+                                            Posted by {job.recruiter_name}
+                                        </div>
+                                    )}
+                                </div>
                                 {hasApplied(job.id) && (
                                     <Badge variant="success">
                                         <CheckCircle2 className="h-3 w-3 mr-1" />

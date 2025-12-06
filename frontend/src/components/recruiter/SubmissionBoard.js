@@ -124,10 +124,13 @@ const SubmissionBoard = () => {
                                         Consultant
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                        Job Title
+                                        Job Details
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                        Submitted On
+                                        Posted By
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Date
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                         Status
@@ -146,26 +149,64 @@ const SubmissionBoard = () => {
                                         key={sub.id}
                                         className={`hover:bg-slate-50 transition-colors ${!sub.recruiter_read ? 'bg-blue-50/30' : ''}`}
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-6 py-4">
                                             <div className="flex items-center">
                                                 <User className="h-5 w-5 text-slate-400 mr-3" />
-                                                <div className="text-sm font-medium text-slate-900">
-                                                    {sub.consultant_name || 'Unknown'}
+                                                <div>
+                                                    <div className="text-sm font-medium text-slate-900">
+                                                        {sub.consultant_name || 'Unknown'}
+                                                    </div>
+                                                    {sub.consultant_email && (
+                                                        <div className="text-xs text-slate-500">
+                                                            {sub.consultant_email}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <FileText className="h-5 w-5 text-slate-400 mr-3" />
-                                                <div className="text-sm text-slate-900">
-                                                    {sub.jd_title || 'Unknown Job'}
+                                        <td className="px-6 py-4">
+                                            <div>
+                                                <div className="flex items-center mb-1">
+                                                    <FileText className="h-4 w-4 text-slate-400 mr-2" />
+                                                    <div className="text-sm font-medium text-slate-900">
+                                                        {sub.jd_title || 'Unknown Job'}
+                                                    </div>
                                                 </div>
+                                                {sub.jd_location && (
+                                                    <div className="text-xs text-slate-500 ml-6">
+                                                        📍 {sub.jd_location}
+                                                    </div>
+                                                )}
+                                                {sub.jd_tech_required && sub.jd_tech_required.length > 0 && (
+                                                    <div className="flex gap-1 mt-1 ml-6 flex-wrap">
+                                                        {sub.jd_tech_required.slice(0, 3).map((tech, idx) => (
+                                                            <Badge key={idx} variant="secondary" className="text-xs">
+                                                                {tech}
+                                                            </Badge>
+                                                        ))}
+                                                        {sub.jd_tech_required.length > 3 && (
+                                                            <span className="text-xs text-slate-500">+{sub.jd_tech_required.length - 3}</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm">
+                                                <div className="font-medium text-slate-900">
+                                                    {sub.jd_recruiter_name || 'Unknown'}
+                                                </div>
+                                                {sub.jd_recruiter_email && (
+                                                    <div className="text-xs text-slate-500">
+                                                        {sub.jd_recruiter_email}
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center text-sm text-slate-600">
-                                                <Calendar className="h-4 w-4 mr-2" />
-                                                {format(new Date(sub.created_at), 'MMM dd, yyyy')}
+                                            <div className="text-xs text-slate-600">
+                                                <div>{format(new Date(sub.created_at), 'MMM dd, yyyy')}</div>
+                                                <div className="text-slate-500">{format(new Date(sub.created_at), 'h:mm a')}</div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
