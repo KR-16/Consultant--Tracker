@@ -5,6 +5,7 @@ import os
 import logging
 from typing import Optional
 from app.schemas import get_all_schemas
+from app.config import settings
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -49,8 +50,8 @@ async def init_db():
     
     try:
         # Step 1: Get MongoDB URL from environment
-        logger.debug("Step 1: Getting MongoDB URL from environment")
-        mongodb_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        logger.debug("Step 1: Getting MongoDB URL from configuration")
+        mongodb_url = settings.MONGODB_URL
         logger.info(f"MongoDB URL: {mongodb_url.replace('://', '://***') if '://' in mongodb_url else '***'}")  # Mask password in URL
         
         # Step 2: Create MongoDB client
@@ -81,8 +82,8 @@ async def init_db():
         # Step 4: Get database instance
         logger.debug("Step 4: Getting database instance")
         try:
-            db.database = db.client.consultant_tracker
-            logger.info(f"Database instance obtained: consultant_tracker")
+            db.database = db.client[settings.DATABASE_NAME]
+            logger.info(f"Database instance obtained: {settings.DATABASE_NAME}")
         except Exception as e:
             logger.error(f"Error getting database instance: {str(e)}", exc_info=True)
             raise ValueError(f"Failed to get database instance: {str(e)}")

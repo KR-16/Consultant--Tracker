@@ -5,6 +5,7 @@ import os
 import logging
 from app.db import init_db, close_db
 from app.routers import auth, consultants, jobs, submissions
+from app.config import settings
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -18,7 +19,15 @@ async def lifespan(app: FastAPI):
     
     # Startup
     try:
-        logger.debug("Step 1: Initializing database connection")
+        logger.debug("Step 1: Validating configuration settings")
+        try:
+            settings.validate_settings()
+            logger.info("Configuration validation completed successfully")
+        except Exception as e:
+            logger.error(f"Configuration validation failed: {str(e)}", exc_info=True)
+            # Continue anyway - validation is informational
+        
+        logger.debug("Step 2: Initializing database connection")
         try:
             await init_db()
             logger.info("Database initialization completed successfully")
@@ -60,9 +69,9 @@ async def lifespan(app: FastAPI):
 logger.info("Creating FastAPI application instance")
 try:
     app = FastAPI(
-        title="Consultant Tracker API - Authentication",
-        description="API for user authentication and management",
-        version="1.0.0",
+        title=settings.API_TITLE,
+        description=settings.API_DESCRIPTION,
+        version=settings.API_VERSION,
         lifespan=lifespan
     )
     logger.info(f"FastAPI application created: {app.title} v{app.version}")
@@ -73,45 +82,23 @@ except Exception as e:
 # CORS middleware - Configure for development
 logger.info("Configuring CORS middleware")
 try:
-    # Step 1: Set default allowed origins
-    logger.debug("Step 1: Setting default allowed origins")
-    allowed_origins = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "http://frontend:3000",
-    ]
-    logger.debug(f"Default allowed origins: {allowed_origins}")
-    
-    # Step 2: Get additional origins from environment variable
-    logger.debug("Step 2: Checking for additional CORS origins from environment")
-    cors_origins_env = os.getenv("CORS_ORIGINS", "")
-    if cors_origins_env:
-        logger.debug(f"Found CORS_ORIGINS environment variable: {cors_origins_env}")
-        try:
-            additional_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
-            allowed_origins.extend(additional_origins)
-            logger.info(f"Added {len(additional_origins)} additional CORS origins from environment")
-        except Exception as e:
-            logger.error(f"Error parsing CORS_ORIGINS environment variable: {str(e)}", exc_info=True)
-            logger.warning("Continuing with default CORS origins only")
-    else:
-        logger.debug("No CORS_ORIGINS environment variable found - using defaults only")
+    # Get allowed origins from configuration
+    logger.debug("Getting allowed CORS origins from configuration")
+    allowed_origins = settings.get_cors_origins()
     
     logger.info(f"Total allowed CORS origins: {len(allowed_origins)}")
     logger.debug(f"Allowed origins: {allowed_origins}")
     
-    # Step 3: Add CORS middleware
-    logger.debug("Step 3: Adding CORS middleware to application")
+    # Add CORS middleware
+    logger.debug("Adding CORS middleware to application")
     try:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=allowed_origins,
-            allow_credentials=True,
-            allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-            allow_headers=["*"],
-            expose_headers=["*"],
+            allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+            allow_methods=settings.CORS_ALLOW_METHODS,
+            allow_headers=settings.CORS_ALLOW_HEADERS,
+            expose_headers=settings.CORS_EXPOSE_HEADERS,
         )
         logger.info("CORS middleware configured successfully")
     except Exception as e:
@@ -125,16 +112,15 @@ except Exception as e:
 # Include routers
 logger.info("Registering application routers")
 try:
-    logger.debug("Step 1: Including authentication router")
+    logger.debug("Including application routers")
     try:
-        app.include_router(auth.router, prefix="/api", tags=["authentication"])
-        app.include_router(consultants.router, prefix="/api", tags=["consultants"])
-        app.include_router(jobs.router, prefix="/api", tags=["jobs"])
-        app.include_router(submissions.router, prefix="/api", tags=["submissions"])
-        logger.info("Authentication router registered successfully at /api")
-        logger.debug(f"Router prefix: /api, tags: ['authentication']")
+        app.include_router(auth.router, prefix=settings.API_PREFIX, tags=["authentication"])
+        app.include_router(consultants.router, prefix=settings.API_PREFIX, tags=["consultants"])
+        app.include_router(jobs.router, prefix=settings.API_PREFIX, tags=["jobs"])
+        app.include_router(submissions.router, prefix=settings.API_PREFIX, tags=["submissions"])
+        logger.info(f"All routers registered successfully at {settings.API_PREFIX}")
     except Exception as e:
-        logger.error(f"Error including authentication router: {str(e)}", exc_info=True)
+        logger.error(f"Error including routers: {str(e)}", exc_info=True)
         raise
 except Exception as e:
     logger.error(f"Error registering routers: {str(e)}", exc_info=True)

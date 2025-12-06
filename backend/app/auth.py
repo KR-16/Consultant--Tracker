@@ -6,25 +6,23 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.models import User, TokenData, UserRole
 from app.db import get_database
-import os
+from app.config import settings
 import logging
 
 # Set up logger
 logger = logging.getLogger(__name__)
 
-# Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Import configuration from centralized config
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 # Log configuration on module load
 logger.debug(f"Auth module initialized - ALGORITHM: {ALGORITHM}, TOKEN_EXPIRE_MINUTES: {ACCESS_TOKEN_EXPIRE_MINUTES}")
-if SECRET_KEY == "your-secret-key-change-this-in-production":
-    logger.warning("Using default SECRET_KEY - change this in production!")
 
 # Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-logger.debug("Password hashing context initialized with bcrypt")
+pwd_context = CryptContext(schemes=settings.PASSWORD_HASH_SCHEMES, deprecated="auto")
+logger.debug(f"Password hashing context initialized with {settings.PASSWORD_HASH_SCHEMES}")
 
 # JWT token scheme
 security = HTTPBearer()
@@ -37,13 +35,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
         # Truncate password to 72 bytes if necessary (bcrypt limitation)
         password_bytes = plain_password.encode('utf-8')
-        if len(password_bytes) > 72:
-            logger.debug(f"Password exceeds 72 bytes ({len(password_bytes)} bytes), truncating")
-            truncated = password_bytes[:72]
+        if len(password_bytes) > settings.PASSWORD_MAX_BYTES:
+            logger.debug(f"Password exceeds {settings.PASSWORD_MAX_BYTES} bytes ({len(password_bytes)} bytes), truncating")
+            truncated = password_bytes[:settings.PASSWORD_MAX_BYTES]
             # Remove incomplete UTF-8 sequences
             while truncated and (truncated[-1] & 0x80) and not (truncated[-1] & 0x40):
                 truncated = truncated[:-1]
             plain_password = truncated.decode('utf-8', errors='ignore')
+
         
         is_valid = pwd_context.verify(plain_password, hashed_password)
         if is_valid:
@@ -62,13 +61,14 @@ def get_password_hash(password: str) -> str:
     try:
         # Truncate password to 72 bytes if necessary
         password_bytes = password.encode('utf-8')
-        if len(password_bytes) > 72:
-            logger.debug(f"Password exceeds 72 bytes ({len(password_bytes)} bytes), truncating")
-            truncated = password_bytes[:72]
+        if len(password_bytes) > settings.PASSWORD_MAX_BYTES:
+            logger.debug(f"Password exceeds {settings.PASSWORD_MAX_BYTES} bytes ({len(password_bytes)} bytes), truncating")
+            truncated = password_bytes[:settings.PASSWORD_MAX_BYTES]
             # Remove incomplete UTF-8 sequences
             while truncated and (truncated[-1] & 0x80) and not (truncated[-1] & 0x40):
                 truncated = truncated[:-1]
             password = truncated.decode('utf-8', errors='ignore')
+
         
         hashed = pwd_context.hash(password)
         logger.debug("Password hashed successfully")

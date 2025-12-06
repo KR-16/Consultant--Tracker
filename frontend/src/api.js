@@ -1,9 +1,9 @@
 import axios from 'axios';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+import { API_CONFIG, AUTH_CONFIG } from './config';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,9 +11,9 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(AUTH_CONFIG.TOKEN_STORAGE_KEY);
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `${AUTH_CONFIG.TOKEN_HEADER_PREFIX} ${token}`;
     }
     return config;
   },
@@ -28,11 +28,11 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem(AUTH_CONFIG.TOKEN_STORAGE_KEY);
       if (token) {
-        localStorage.removeItem('token');
-        if (!window.location.pathname.includes('/login') && 
-            !window.location.pathname.includes('/register')) {
+        localStorage.removeItem(AUTH_CONFIG.TOKEN_STORAGE_KEY);
+        if (!window.location.pathname.includes('/login') &&
+          !window.location.pathname.includes('/register')) {
           window.location.href = '/login';
         }
       }
@@ -52,7 +52,7 @@ export const authAPI = {
 
 export const jobAPI = {
 
-  getAll: () => api.get('/jobs/'), 
+  getAll: () => api.get('/jobs/'),
   create: (jobData) => api.post('/jobs/', jobData),
   getOne: (id) => api.get(`/jobs/${id}`),
 };
