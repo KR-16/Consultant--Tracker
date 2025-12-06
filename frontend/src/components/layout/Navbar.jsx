@@ -1,14 +1,15 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Search, LogOut } from 'lucide-react';
-import { Input } from '../ui/input';
+import { LogOut } from 'lucide-react'; 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'ADMIN';
+  const isCandidate = user?.role === 'CANDIDATE';
 
   const handleLogout = () => {
     logout();
@@ -16,19 +17,9 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="h-16 bg-white border-b border-slate-100 px-6 flex items-center justify-between sticky top-0 z-10">
+    <nav className="h-16 bg-white border-b border-slate-100 px-6 flex items-center justify-end sticky top-0 z-10">
       
-      {/* Left: Search Bar */}
-      <div className="flex-1 max-w-md">
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <Input 
-            placeholder="Search..." 
-            className="pl-10 bg-transparent border-none focus-visible:ring-0 placeholder:text-slate-400"
-          />
-        </div>
-      </div>
-
+    
       {/* Right: Profile Area */}
       <div className="flex items-center gap-4">
         
@@ -51,14 +42,10 @@ const Navbar = () => {
             </DropdownMenuTrigger>
             
             <DropdownMenuContent align="end" className="w-48">
-              {/* Only show "Profile" & "Settings" if NOT Admin (as per request) */}
-              {!isAdmin && (
+              {isCandidate && (
                 <>
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <DropdownMenuItem onClick={() => navigate('/candidate/resume')}>
                     Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    Settings
                   </DropdownMenuItem>
                   <div className="h-px bg-slate-100 my-1" />
                 </>

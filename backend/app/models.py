@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 class UserRole(str, Enum):
     ADMIN = "ADMIN"
-    TALENT_MANAGER = "TALENT_MANAGER"  # Renamed from RECRUITER
-    CANDIDATE = "CANDIDATE"            # Renamed from CONSULTANT
+    TALENT_MANAGER = "TALENT_MANAGER"  
+    CANDIDATE = "CANDIDATE"            
     
     def __str__(self):
         return self.value
@@ -84,7 +84,7 @@ class TokenData(BaseModel):
     email: Optional[str] = None
     role: Optional[str] = None
 
-# --- 3. CANDIDATE PROFILE (Formerly Consultant) ---
+# --- 3. CANDIDATE PROFILE  ---
 
 class CandidateProfileBase(BaseModel):
     experience_years: float = Field(..., ge=0)
@@ -95,6 +95,7 @@ class CandidateProfileBase(BaseModel):
     rating: Optional[float] = None
     notes: Optional[str] = None
     resume_url: Optional[str] = None
+    assigned_manager_id: Optional[str] = None  # 👈 NEW FIELD
 
 class CandidateProfileCreate(CandidateProfileBase):
     pass
@@ -106,6 +107,7 @@ class CandidateProfileUpdate(BaseModel):
     location: Optional[str] = None
     visa_status: Optional[str] = None
     resume_url: Optional[str] = None
+    assigned_manager_id: Optional[str] = None 
 
 class CandidateProfile(CandidateProfileBase):
     id: str
@@ -118,7 +120,6 @@ class CandidateProfile(CandidateProfileBase):
         from_attributes = True
 
 # --- 4. JOB DESCRIPTIONS ---
-
 
 class JobDescriptionBase(BaseModel):
     title: str = Field(..., min_length=1)

@@ -3,31 +3,25 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import CandidateJobs from './pages/candidates/CandidateJobs';
-import CandidateTracker from './pages/candidates/CandidateTracker';
-import CandidateResume from './pages/candidates/CandidateResume';
-
-// Layout
 import Layout from './components/layout/Layout';
 
 // Pages
 import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
-import Dashboard from './pages/dashboard/Dashboard';
-import UserManagement from './pages/admin/UserManagement';
-import Availability from './pages/Availability';
-import Candidates from './pages/candidates/Candidates'; 
-import Submissions from './pages/submissions/Submissions'; 
 import NotFound from './pages/NotFound';
 
-// Placeholder for Reports (Create a real file later if needed)
-const Reports = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold text-slate-900">Reports</h1>
-    <p className="text-slate-500 mt-2">Analytics module coming soon.</p>
-  </div>
-);
+// Features
+import Dashboard from './pages/dashboard/Dashboard';
+import Availability from './pages/Availability';
+import UserManagement from './pages/admin/UserManagement';
+import Candidates from './pages/candidates/Candidates'; 
+import Submissions from './pages/submissions/Submissions'; 
+import CandidateJobs from './pages/candidates/CandidateJobs';
+import CandidateTracker from './pages/candidates/CandidateTracker';
+import CandidateResume from './pages/candidates/CandidateResume';
+
+const Reports = () => <div className="p-8"><h1 className="text-2xl font-bold">Reports</h1></div>;
 
 const queryClient = new QueryClient();
 
@@ -37,87 +31,56 @@ const App = () => {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* --- PUBLIC ROUTES --- */}
+            {/* PUBLIC */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* --- PROTECTED ROUTES (All wrapped in Layout) --- */}
-            
-            
-            {/* Dashboard */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Dashboard />
-                  </Layout>
-                </ProtectedRoute>
-              } 
-            />
+            {/* APP SHELL (Layout) */}
+            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                
+                {/* 1. Dashboard (Open to ALL roles) */}
+                <Route path="/dashboard" element={<Dashboard />} />
 
-            {/* Availability */}
-            <Route 
-              path="/availability" 
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Availability />
-                  </Layout>
-                </ProtectedRoute>
-              } 
-            />
+                {/* 2. Candidate Specific Pages */}
+                <Route path="/candidate/jobs" element={<CandidateJobs />} />
+                <Route path="/candidate/tracker" element={<CandidateTracker />} />
+                <Route path="/candidate/resume" element={<CandidateResume />} />
 
-            {/* Candidates (Consultants) - Admin & Manager Only */}
-            <Route 
-              path="/candidates" 
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
-                  <Layout>
+                {/* 3. Manager & Admin Pages */}
+                <Route path="/candidates" element={
+                  <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
                     <Candidates />
-                  </Layout>
-                </ProtectedRoute>
-              } 
-            />
-
-            {/* Submissions - Admin & Manager Only */}
-            <Route 
-              path="/submissions" 
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
-                  <Layout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/submissions" element={
+                  <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
                     <Submissions />
-                  </Layout>
-                </ProtectedRoute>
-              } 
-            />
-
-            {/* Reports - Admin & Manager Only */}
-            <Route 
-              path="/reports" 
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
-                  <Layout>
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/availability" element={
+                  <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
+                    <Availability />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="/reports" element={
+                  <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
                     <Reports />
-                  </Layout>
-                </ProtectedRoute>
-              } 
-            />
+                  </ProtectedRoute>
+                } />
 
-            {/* --- ADMIN ONLY ROUTES --- */}
-            <Route 
-              path="/admin/users" 
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <Layout>
+                {/* 4. Admin Only Pages */}
+                <Route path="/admin/users" element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
                     <UserManagement />
-                  </Layout>
-                </ProtectedRoute>
-              } 
-            />
+                  </ProtectedRoute>
+                } />
 
-            {/* --- CATCH ALL --- */}
+            </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

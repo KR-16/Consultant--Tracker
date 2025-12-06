@@ -8,11 +8,22 @@ router = APIRouter(prefix="/candidates", tags=["Candidates"])
 
 @router.get("/", response_model=List[CandidateProfile])
 async def get_all_candidates(
-    current_user: User = Depends(require_talent_manager_or_admin),
+    current_user: User = Depends(get_current_user), 
     repo: CandidateRepository = Depends(CandidateRepository)
 ):
-    """Talent Managers see all candidates"""
-    return await repo.get_all_profiles()
+    """
+    Get candidates. 
+    - Admins see ALL.
+    - Managers see only ASSIGNED.
+    """
+    if current_user.role == UserRole.ADMIN:
+        return await repo.get_all_profiles()
+    
+    elif current_user.role == UserRole.TALENT_MANAGER:
+        return await repo.get_all_profiles(manager_id=current_user.id)
+    
+    else:
+        raise HTTPException(status_code=403, detail="Not authorized")
 
 @router.post("/profile", response_model=CandidateProfile)
 async def create_my_profile(

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
+import api from '../../api';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { Checkbox } from '../../components/ui/checkbox';
 import { Users, Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 const Login = () => {
@@ -23,9 +23,17 @@ const Login = () => {
     setError('');
     setLoading(true);
 
+  
     try {
       await login(email, password);
-      navigate('/dashboard');
+      const userRes = await api.get('/auth/me'); 
+      const role = userRes.data.role;
+
+      if (role === 'CANDIDATE') {
+        navigate('/candidate/jobs');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError('Invalid email or password');
     } finally {
@@ -118,17 +126,6 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Checkbox id="remember" />
-                <label htmlFor="remember" className="text-sm font-medium text-slate-600 cursor-pointer">
-                  Remember me
-                </label>
-              </div>
-              <Link to="/forgot-password" className="text-sm font-medium text-slate-900 hover:underline">
-                Forgot password?
-              </Link>
-            </div>
 
             <Button
               type="submit"
