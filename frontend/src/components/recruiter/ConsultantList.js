@@ -1,24 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Box,
-    Typography,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Chip,
-    Button,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Grid,
-    CircularProgress
-} from '@mui/material';
-// --- FIX 1: Import the helper, NOT axios ---
+import { User, Briefcase, MapPin, Mail, Phone, Star, Loader2, Users as UsersIcon } from 'lucide-react';
+import { Card } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { consultantAPI } from '../../api';
 
 const ConsultantList = () => {
@@ -33,9 +18,8 @@ const ConsultantList = () => {
 
     const fetchConsultants = async () => {
         try {
-            // --- FIX 2: Use consultantAPI.getAll() ---
-            // This handles the Token and the URL automatically
             const response = await consultantAPI.getAll();
+            console.log('Consultants fetched:', response.data);
             setConsultants(response.data);
         } catch (error) {
             console.error('Error fetching consultants:', error);
@@ -49,144 +33,230 @@ const ConsultantList = () => {
         setDetailsOpen(true);
     };
 
-    if (loading) return <CircularProgress />;
+    const getAvailabilityVariant = (available) => {
+        return available ? 'success' : 'secondary';
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
+            </div>
+        );
+    }
 
     return (
-        <Box sx={{ mt: 3 }}>
-            <Typography variant="h5" gutterBottom>Consultants</Typography>
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Experience</TableCell>
-                            <TableCell>Tech Stack</TableCell>
-                            <TableCell>Location</TableCell>
-                            <TableCell>Availability</TableCell>
-                            <TableCell>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {consultants.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={6} align="center">
-                                    No consultants found. Consultants will appear here once they create their profiles.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            consultants.map((consultant) => (
-                                <TableRow key={consultant.id}>
-                                    <TableCell>{consultant.name || 'N/A'}</TableCell>
-                                    <TableCell>{consultant.experience_years || 0} Years</TableCell>
-                                    <TableCell>
-                                        {/* Safety check in case tech_stack is null */}
-                                        {consultant.tech_stack && consultant.tech_stack.length > 0 ? (
-                                            <>
-                                                {consultant.tech_stack.slice(0, 3).map(tech => (
-                                                    <Chip key={tech} label={tech} size="small" sx={{ mr: 0.5 }} />
-                                                ))}
-                                                {consultant.tech_stack.length > 3 && `+${consultant.tech_stack.length - 3}`}
-                                            </>
-                                        ) : (
-                                            '-'
-                                        )}
-                                    </TableCell>
-                                    <TableCell>{consultant.location || '-'}</TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={consultant.available ? 'Available' : 'Unavailable'}
-                                            color={consultant.available ? 'success' : 'default'}
-                                            size="small"
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button size="small" variant="outlined" onClick={() => handleViewDetails(consultant)}>
-                                            View Profile
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+        <div>
+            <div className="mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">Consultants</h2>
+                <p className="text-slate-600 mt-1">{consultants.length} total consultants</p>
+            </div>
 
-            <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="md" fullWidth>
-                <DialogTitle>Consultant Profile: {selectedConsultant?.name || 'N/A'}</DialogTitle>
-                <DialogContent dividers>
+            {consultants.length === 0 ? (
+                <Card className="p-12">
+                    <div className="text-center">
+                        <UsersIcon className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-slate-900 mb-2">No consultants found</h3>
+                        <p className="text-slate-600">Consultants will appear here once they create their profiles</p>
+                    </div>
+                </Card>
+            ) : (
+                <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Name
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Experience
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Tech Stack
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Location
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Availability
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {consultants.map((consultant) => (
+                                    <tr key={consultant.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <User className="h-5 w-5 text-slate-400 mr-3" />
+                                                <div className="text-sm font-medium text-slate-900">
+                                                    {consultant.name || 'N/A'}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center text-sm text-slate-600">
+                                                <Briefcase className="h-4 w-4 mr-2" />
+                                                {consultant.experience_years || 0} Years
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-wrap gap-1">
+                                                {consultant.tech_stack && consultant.tech_stack.length > 0 ? (
+                                                    <>
+                                                        {consultant.tech_stack.slice(0, 3).map((tech, idx) => (
+                                                            <Badge key={`${tech}-${idx}`} variant="secondary" className="text-xs">
+                                                                {tech}
+                                                            </Badge>
+                                                        ))}
+                                                        {consultant.tech_stack.length > 3 && (
+                                                            <span className="text-xs text-slate-500">
+                                                                +{consultant.tech_stack.length - 3}
+                                                            </span>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <span className="text-sm text-slate-400">-</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center text-sm text-slate-600">
+                                                {consultant.location ? (
+                                                    <>
+                                                        <MapPin className="h-4 w-4 mr-2" />
+                                                        {consultant.location}
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-400">-</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <Badge variant={getAvailabilityVariant(consultant.available)}>
+                                                {consultant.available ? 'Available' : 'Unavailable'}
+                                            </Badge>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleViewDetails(consultant)}
+                                            >
+                                                View Profile
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Consultant Details Dialog */}
+            <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)}>
+                <DialogHeader>
+                    <DialogTitle>Consultant Profile: {selectedConsultant?.name || 'N/A'}</DialogTitle>
+                </DialogHeader>
+                <DialogContent>
                     {selectedConsultant && (
-                        <Grid container spacing={3} sx={{ mt: 1 }}>
-                            <Grid item xs={12}>
-                                <Typography variant="h6" gutterBottom>Contact Information</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="subtitle2" color="text.secondary">Email</Typography>
-                                <Typography variant="body1">{selectedConsultant.email || '-'}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="subtitle2" color="text.secondary">Phone</Typography>
-                                <Typography variant="body1">{selectedConsultant.phone || '-'}</Typography>
-                            </Grid>
-                            
-                            <Grid item xs={12}>
-                                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Professional Details</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="subtitle2" color="text.secondary">Experience</Typography>
-                                <Typography variant="body1">{selectedConsultant.experience_years || 0} Years</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="subtitle2" color="text.secondary">Availability</Typography>
-                                <Chip
-                                    label={selectedConsultant.available ? 'Available' : 'Unavailable'}
-                                    color={selectedConsultant.available ? 'success' : 'default'}
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="subtitle2" color="text.secondary">Location</Typography>
-                                <Typography variant="body1">{selectedConsultant.location || '-'}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="subtitle2" color="text.secondary">Visa Status</Typography>
-                                <Typography variant="body1">{selectedConsultant.visa_status || '-'}</Typography>
-                            </Grid>
-                            {selectedConsultant.rating && (
-                                <Grid item xs={6}>
-                                    <Typography variant="subtitle2" color="text.secondary">Rating</Typography>
-                                    <Typography variant="body1">{selectedConsultant.rating}/5.0</Typography>
-                                </Grid>
-                            )}
-                            
-                            <Grid item xs={12}>
-                                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Technical Skills</Typography>
-                                <Box sx={{ mt: 1 }}>
+                        <div className="space-y-6">
+                            {/* Contact Information */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 mb-3">Contact Information</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-slate-500 mb-1">Email</p>
+                                        <div className="flex items-center text-sm text-slate-900">
+                                            <Mail className="h-4 w-4 mr-2 text-slate-400" />
+                                            {selectedConsultant.email || '-'}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500 mb-1">Phone</p>
+                                        <div className="flex items-center text-sm text-slate-900">
+                                            <Phone className="h-4 w-4 mr-2 text-slate-400" />
+                                            {selectedConsultant.phone || '-'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Professional Details */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 mb-3">Professional Details</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-slate-500 mb-1">Experience</p>
+                                        <p className="text-sm text-slate-900">{selectedConsultant.experience_years || 0} Years</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500 mb-1">Availability</p>
+                                        <Badge variant={getAvailabilityVariant(selectedConsultant.available)}>
+                                            {selectedConsultant.available ? 'Available' : 'Unavailable'}
+                                        </Badge>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500 mb-1">Location</p>
+                                        <p className="text-sm text-slate-900">{selectedConsultant.location || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-slate-500 mb-1">Visa Status</p>
+                                        <p className="text-sm text-slate-900">{selectedConsultant.visa_status || '-'}</p>
+                                    </div>
+                                    {selectedConsultant.rating && (
+                                        <div>
+                                            <p className="text-sm text-slate-500 mb-1">Rating</p>
+                                            <div className="flex items-center">
+                                                <Star className="h-4 w-4 text-yellow-400 fill-yellow-400 mr-1" />
+                                                <span className="text-sm text-slate-900">{selectedConsultant.rating}/5.0</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Technical Skills */}
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 mb-3">Technical Skills</h3>
+                                <div className="flex flex-wrap gap-2">
                                     {selectedConsultant.tech_stack && selectedConsultant.tech_stack.length > 0 ? (
-                                        selectedConsultant.tech_stack.map(tech => (
-                                            <Chip key={tech} label={tech} sx={{ mr: 0.5, mb: 0.5 }} />
+                                        selectedConsultant.tech_stack.map((tech, idx) => (
+                                            <Badge key={`${tech}-${idx}`} variant="secondary">
+                                                {tech}
+                                            </Badge>
                                         ))
                                     ) : (
-                                        <Typography variant="body2" color="text.secondary">No skills listed</Typography>
+                                        <p className="text-sm text-slate-500">No skills listed</p>
                                     )}
-                                </Box>
-                            </Grid>
-                            
+                                </div>
+                            </div>
+
+                            {/* Notes */}
                             {selectedConsultant.notes && (
-                                <Grid item xs={12}>
-                                    <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Notes</Typography>
-                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
-                                        {selectedConsultant.notes}
-                                    </Typography>
-                                </Grid>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-900 mb-3">Notes</h3>
+                                    <div className="bg-slate-50 rounded-lg p-4">
+                                        <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                                            {selectedConsultant.notes}
+                                        </p>
+                                    </div>
+                                </div>
                             )}
-                        </Grid>
+                        </div>
                     )}
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDetailsOpen(false)} variant="contained">Close</Button>
-                </DialogActions>
+                <DialogFooter>
+                    <Button onClick={() => setDetailsOpen(false)}>
+                        Close
+                    </Button>
+                </DialogFooter>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

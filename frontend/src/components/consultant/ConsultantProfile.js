@@ -1,36 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Box,
-    TextField,
-    Button,
-    Typography,
-    Paper,
-    Grid,
-    FormControlLabel,
-    Switch,
-    Chip,
-    Alert,
-    CircularProgress
-} from '@mui/material';
-
-import api, { consultantAPI } from '../../api';
+import { User, Mail, Briefcase, Calendar, Save, Loader2, CheckCircle2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Badge } from '../ui/badge';
+import api from '../../api';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ConsultantProfile = () => {
-    const [profile, setProfile] = useState({
-        experience_years: 0,
-        tech_stack: [],
-        available: true,
-        location: '',
-        visa_status: '',
-        notes: '',
-        email: '',
-        name: '',
-        phone: ''
-    });
+    const { user } = useAuth();
+    const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
-    const [techInput, setTechInput] = useState('');
+    const [formData, setFormData] = useState({
+        skills: '',
+        experience: '',
+        availability: 'AVAILABLE',
+    });
 
     useEffect(() => {
         fetchProfile();
@@ -38,44 +26,18 @@ const ConsultantProfile = () => {
 
     const fetchProfile = async () => {
         try {
-        
-            const response = await consultantAPI.getProfile();
+            const response = await api.get('/consultants/me');
             setProfile(response.data);
+            setFormData({
+                skills: response.data.skills?.join(', ') || '',
+                experience: response.data.experience || '',
+                availability: response.data.availability || 'AVAILABLE',
+            });
         } catch (error) {
             console.error('Error fetching profile:', error);
-            setMessage({ type: 'error', text: 'Failed to load profile' });
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setProfile(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSwitchChange = (e) => {
-        setProfile(prev => ({ ...prev, available: e.target.checked }));
-    };
-
-    const handleTechAdd = (e) => {
-        if (e.key === 'Enter' && techInput.trim()) {
-            e.preventDefault();
-            if (!profile.tech_stack.includes(techInput.trim())) {
-                setProfile(prev => ({
-                    ...prev,
-                    tech_stack: [...prev.tech_stack, techInput.trim()]
-                }));
-            }
-            setTechInput('');
-        }
-    };
-
-    const handleTechDelete = (techToDelete) => {
-        setProfile(prev => ({
-            ...prev,
-            tech_stack: prev.tech_stack.filter(tech => tech !== techToDelete)
-        }));
     };
 
     const handleSubmit = async (e) => {
@@ -84,15 +46,15 @@ const ConsultantProfile = () => {
         setMessage({ type: '', text: '' });
 
         try {
-            await api.put('/consultants/me', {
-                experience_years: Number(profile.experience_years),
-                tech_stack: profile.tech_stack,
-                available: profile.available,
-                location: profile.location,
-                visa_status: profile.visa_status,
-                notes: profile.notes
-            });
-            setMessage({ type: 'success', text: 'Profile updated successfully' });
+            const data = {
+                skills: formData.skills.split(',').map(s => s.trim()).filter(s => s),
+                experience: parseInt(formData.experience) || 0,
+                availability: formData.availability,
+            };
+
+            await api.put('/consultants/me', data);
+            setMessage({ type: 'success', text: 'Profile updated successfully!' });
+            fetchProfile();
         } catch (error) {
             console.error('Error updating profile:', error);
             setMessage({ type: 'error', text: 'Failed to update profile' });
@@ -101,130 +63,163 @@ const ConsultantProfile = () => {
         }
     };
 
-    if (loading) return <CircularProgress />;
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
+            </div>
+        );
+    }
 
     return (
-        <Paper sx={{ p: 3, maxWidth: 800, mx: 'auto', mt: 3 }}>
-            <Typography variant="h5" gutterBottom>My Profile</Typography>
+        <div>
+            <div className="mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">My Profile</h2>
+                <p className="text-slate-600 mt-1">Manage your consultant profile information</p>
+            </div>
 
-            {message.text && (
-                <Alert severity={message.type} sx={{ mb: 2 }}>
-                    {message.text}
-                </Alert>
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Profile Info Card */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Profile Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-16 h-16 rounded-full bg-slate-900 text-white flex items-center justify-center text-2xl font-bold">
+                                {user?.name?.charAt(0)?.toUpperCase()}
+                            </div>
+                            <div>
+                                <div className="font-medium text-slate-900">{user?.name}</div>
+                                <div className="text-sm text-slate-600">{user?.role}</div>
+                            </div>
+                        </div>
 
-            <form onSubmit={handleSubmit}>
-                <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            fullWidth
-                            label="Name"
-                            value={profile.name || ''}
-                            disabled
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            fullWidth
-                            label="Email"
-                            value={profile.email || ''}
-                            disabled
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            fullWidth
-                            label="Phone"
-                            name="phone"
-                            value={profile.phone || ''}
-                            onChange={handleChange}
-    
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            fullWidth
-                            label="Experience (Years)"
-                            name="experience_years"
-                            type="number"
-                            value={profile.experience_years}
-                            onChange={handleChange}
-                            inputProps={{ min: 0, step: 0.5 }}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            fullWidth
-                            label="Location"
-                            name="location"
-                            value={profile.location || ''}
-                            onChange={handleChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            fullWidth
-                            label="Visa Status"
-                            name="visa_status"
-                            value={profile.visa_status || ''}
-                            onChange={handleChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Typography variant="subtitle2" gutterBottom>Tech Stack (Press Enter to add)</Typography>
-                        <Box sx={{ mb: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                            {profile.tech_stack && profile.tech_stack.map((tech) => (
-                                <Chip
-                                    key={tech}
-                                    label={tech}
-                                    onDelete={() => handleTechDelete(tech)}
+                        <div className="space-y-3 pt-4 border-t">
+                            <div className="flex items-center gap-2 text-sm">
+                                <Mail className="h-4 w-4 text-slate-400" />
+                                <span className="text-slate-600">{user?.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                                <Briefcase className="h-4 w-4 text-slate-400" />
+                                <span className="text-slate-600">{formData.experience || 0} years experience</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-slate-400" />
+                                <Badge variant={formData.availability === 'AVAILABLE' ? 'success' : 'secondary'}>
+                                    {formData.availability}
+                                </Badge>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Edit Profile Form */}
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Edit Profile</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {message.text && (
+                            <div className={`p-3 rounded-lg mb-4 flex items-center gap-2 ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                                }`}>
+                                {message.type === 'success' ? (
+                                    <CheckCircle2 className="h-5 w-5" />
+                                ) : (
+                                    <User className="h-5 w-5" />
+                                )}
+                                {message.text}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <Label htmlFor="skills">Skills (comma-separated)</Label>
+                                <Input
+                                    id="skills"
+                                    name="skills"
+                                    value={formData.skills}
+                                    onChange={handleChange}
+                                    placeholder="React, Node.js, Python, AWS"
+                                    className="mt-2"
                                 />
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Enter your skills separated by commas
+                                </p>
+                            </div>
+
+                            <div>
+                                <Label htmlFor="experience">Years of Experience</Label>
+                                <Input
+                                    id="experience"
+                                    name="experience"
+                                    type="number"
+                                    value={formData.experience}
+                                    onChange={handleChange}
+                                    placeholder="5"
+                                    className="mt-2"
+                                    min="0"
+                                />
+                            </div>
+
+                            <div>
+                                <Label htmlFor="availability">Availability</Label>
+                                <select
+                                    id="availability"
+                                    name="availability"
+                                    value={formData.availability}
+                                    onChange={handleChange}
+                                    className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+                                >
+                                    <option value="AVAILABLE">Available</option>
+                                    <option value="BUSY">Busy</option>
+                                    <option value="NOT_AVAILABLE">Not Available</option>
+                                </select>
+                            </div>
+
+                            <Button type="submit" disabled={saving} className="w-full">
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        Save Profile
+                                    </>
+                                )}
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Skills Display */}
+            {profile?.skills && profile.skills.length > 0 && (
+                <Card className="mt-6">
+                    <CardHeader>
+                        <CardTitle>My Skills</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-wrap gap-2">
+                            {profile.skills.map((skill, index) => (
+                                <Badge key={index} variant="secondary" className="text-sm">
+                                    {skill}
+                                </Badge>
                             ))}
-                        </Box>
-                        <TextField
-                            fullWidth
-                            placeholder="Add skill..."
-                            value={techInput}
-                            onChange={(e) => setTechInput(e.target.value)}
-                            onKeyDown={handleTechAdd}
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    checked={profile.available}
-                                    onChange={handleSwitchChange}
-                                    color="primary"
-                                />
-                            }
-                            label="Available for new projects"
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <TextField
-                            fullWidth
-                            label="Notes"
-                            name="notes"
-                            multiline
-                            rows={4}
-                            value={profile.notes || ''}
-                            onChange={handleChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                            disabled={saving}
-                        >
-                            {saving ? 'Saving...' : 'Save Profile'}
-                        </Button>
-                    </Grid>
-                </Grid>
-            </form>
-        </Paper>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
     );
 };
 
