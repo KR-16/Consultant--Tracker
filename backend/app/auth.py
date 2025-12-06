@@ -32,177 +32,95 @@ logger.debug("HTTPBearer security scheme initialized")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    logger.debug("Starting password verification")
-    
     try:
         # Truncate password to 72 bytes if necessary (bcrypt limitation)
         password_bytes = plain_password.encode('utf-8')
         if len(password_bytes) > 72:
-            logger.debug(f"Password exceeds 72 bytes ({len(password_bytes)} bytes), truncating")
             truncated = password_bytes[:72]
-            # Remove incomplete UTF-8 sequences
             while truncated and (truncated[-1] & 0x80) and not (truncated[-1] & 0x40):
                 truncated = truncated[:-1]
             plain_password = truncated.decode('utf-8', errors='ignore')
         
-        is_valid = pwd_context.verify(plain_password, hashed_password)
-        if is_valid:
-            logger.debug("Password verification successful")
-        else:
-            logger.debug("Password verification failed - password does not match")
-        return is_valid
+        return pwd_context.verify(plain_password, hashed_password)
     except Exception as e:
         logger.error(f"Error during password verification: {str(e)}", exc_info=True)
         return False
 
 def get_password_hash(password: str) -> str:
     """Hash a password - bcrypt has a 72-byte limit"""
-    logger.debug("Starting password hashing")
-    
     try:
-        # Truncate password to 72 bytes if necessary
         password_bytes = password.encode('utf-8')
         if len(password_bytes) > 72:
-            logger.debug(f"Password exceeds 72 bytes ({len(password_bytes)} bytes), truncating")
             truncated = password_bytes[:72]
-            # Remove incomplete UTF-8 sequences
             while truncated and (truncated[-1] & 0x80) and not (truncated[-1] & 0x40):
                 truncated = truncated[:-1]
             password = truncated.decode('utf-8', errors='ignore')
         
-        hashed = pwd_context.hash(password)
-        logger.debug("Password hashed successfully")
-        return hashed
+        return pwd_context.hash(password)
     except Exception as e:
         logger.error(f"Error during password hashing: {str(e)}", exc_info=True)
         raise ValueError(f"Password hashing failed: {str(e)}")
 
-async def authenticate_user(email: str, password: str) -> Optional[User]:
-    """Authenticate a user with email and password"""
-    logger.debug(f"Authenticating user with email: {email}")
-    
-    try:
-        user = await get_user_by_email(email)
-        if not user:
-            logger.warning(f"Authentication failed: User not found with email: {email}")
-            return None
-        
-        if not verify_password(password, user.hashed_password):
-            logger.warning(f"Authentication failed: Invalid password for email: {email}")
-            return None
-        
-        logger.info(f"User authenticated successfully: {email}, ID: {user.id}, role: {user.role}")
-        return user
-    except Exception as e:
-        logger.error(f"Unexpected error during authentication: {str(e)}", exc_info=True)
-        return None
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Create a JWT access token"""
-    logger.debug("Creating JWT access token")
-    
-    try:
-        # Step 1: Copy data to avoid modifying original
-        logger.debug("Step 1: Copying token data")
-        to_encode = data.copy()
-        logger.debug(f"Token data copied - contains keys: {list(to_encode.keys())}")
-        
-        # Step 2: Calculate expiration time
-        logger.debug("Step 2: Calculating token expiration time")
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-            logger.debug(f"Using provided expiration delta: {expires_delta}")
-        else:
-            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-            logger.debug(f"Using default expiration: {ACCESS_TOKEN_EXPIRE_MINUTES} minutes")
-        
-        logger.debug(f"Token will expire at: {expire}")
-        
-        # Step 3: Add expiration to token data
-        logger.debug("Step 3: Adding expiration to token data")
-        to_encode.update({"exp": expire})
-        logger.debug("Expiration added to token data")
-        
-        # Step 4: Encode JWT token
-        logger.debug(f"Step 4: Encoding JWT token with algorithm: {ALGORITHM}")
-        try:
-            encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-            logger.debug("JWT token encoded successfully")
-            logger.info(f"Access token created successfully - expires at: {expire}")
-            return encoded_jwt
-        except JWTError as e:
-            logger.error(f"JWT encoding error: {str(e)}", exc_info=True)
-            raise ValueError(f"Token encoding failed: {str(e)}")
-        except Exception as e:
-            logger.error(f"Unexpected error during JWT encoding: {str(e)}", exc_info=True)
-            raise ValueError(f"Token creation failed: {str(e)}")
-            
-    except ValueError as e:
-        logger.error(f"Token creation validation error: {str(e)}")
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error during token creation: {str(e)}", exc_info=True)
-        raise ValueError(f"Token creation failed: {str(e)}")
-
 async def get_user_by_email(email: str) -> Optional[User]:
     """Get user by email from database"""
-    logger.debug(f"Getting user by email: {email}")
-    
     try:
-        # Step 1: Validate email
-        logger.debug(f"Step 1: Validating email format: {email}")
-        if not email or not email.strip():
-            logger.warning("Empty email provided to get_user_by_email")
+        if not email:
             return None
         
-        # Step 2: Get database connection
-        logger.debug("Step 2: Getting database connection")
-        try:
-            db = await get_database()
-            if db is None:
-                logger.error("Database connection not available")
-                return None
-            logger.debug("Database connection obtained successfully")
-        except Exception as e:
-            logger.error(f"Error getting database connection: {str(e)}", exc_info=True)
+        db = await get_database()
+        if db is None:
             return None
         
-        # Step 3: Query database for user
-        logger.debug(f"Step 3: Querying database for user with email: {email}")
-        try:
-            user_data = await db.users.find_one({"email": email})
-            if user_data:
-                logger.debug(f"User found in database: {email}")
-                
-                # Step 4: Convert MongoDB _id to id (required by User model)
-                logger.debug("Step 4: Converting MongoDB _id to id")
-                user_data["id"] = str(user_data["_id"])
-                logger.debug(f"User ID converted: {user_data['id']}")
-                
-                # Step 5: Create User object
-                logger.debug("Step 5: Creating User object from database data")
-                try:
-                    user = User(**user_data)
-                    logger.info(f"User retrieved successfully: {email}, ID: {user.id}, role: {user.role}")
-                    return user
-                except Exception as e:
-                    logger.error(f"Error creating User object: {str(e)}", exc_info=True)
-                    return None
-            else:
-                logger.debug(f"User not found with email: {email}")
+        user_data = await db.users.find_one({"email": email})
+        if user_data:
+            # Convert MongoDB _id to id
+            user_data["id"] = str(user_data["_id"])
+            try:
+                # This will validates against new UserRole (TALENT_MANAGER/CANDIDATE)
+                return User(**user_data)
+            except Exception as e:
+                logger.error(f"Error creating User object: {str(e)}", exc_info=True)
                 return None
-        except Exception as e:
-            logger.error(f"Database error while getting user by email: {str(e)}", exc_info=True)
-            return None
-            
+        return None
     except Exception as e:
         logger.error(f"Unexpected error getting user by email: {str(e)}", exc_info=True)
         return None
 
+async def authenticate_user(email: str, password: str) -> Optional[User]:
+    """Authenticate a user with email and password"""
+    try:
+        user = await get_user_by_email(email)
+        if not user:
+            return None
+        
+        if not verify_password(password, user.hashed_password):
+            return None
+        
+        logger.info(f"User authenticated: {email}, Role: {user.role}")
+        return user
+    except Exception as e:
+        logger.error(f"Authentication error: {str(e)}", exc_info=True)
+        return None
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    """Create a JWT access token"""
+    try:
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        
+        to_encode.update({"exp": expire})
+        
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+    except Exception as e:
+        logger.error(f"Token creation failed: {str(e)}", exc_info=True)
+        raise ValueError("Could not create token")
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
     """Get current authenticated user from JWT token"""
-    logger.debug("Getting current user from JWT token")
-    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -210,154 +128,65 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     )
     
     try:
-        # Step 1: Extract token from credentials
-        logger.debug("Step 1: Extracting token from credentials")
-        try:
-            token = credentials.credentials
-            logger.debug("Token extracted from credentials")
-        except AttributeError as e:
-            logger.error(f"Error extracting token from credentials: {str(e)}", exc_info=True)
-            raise credentials_exception
-        except Exception as e:
-            logger.error(f"Unexpected error extracting token: {str(e)}", exc_info=True)
-            raise credentials_exception
-        
-        # Step 2: Decode JWT token
-        logger.debug("Step 2: Decoding JWT token")
+        token = credentials.credentials
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            logger.debug("JWT token decoded successfully")
-        except JWTError as e:
-            logger.warning(f"JWT decode error: {str(e)}")
-            raise credentials_exception
-        except Exception as e:
-            logger.error(f"Unexpected error decoding JWT: {str(e)}", exc_info=True)
-            raise credentials_exception
-        
-        # Step 3: Extract email from token payload
-        logger.debug("Step 3: Extracting email from token payload")
-        email: str = payload.get("sub")
-        if email is None:
-            logger.warning("Token payload missing 'sub' (email) field")
-            raise credentials_exception
-        logger.debug(f"Email extracted from token: {email}")
-        
-        # Step 4: Create TokenData object
-        logger.debug("Step 4: Creating TokenData object")
-        try:
+            email: str = payload.get("sub")
+            if email is None:
+                raise credentials_exception
             token_data = TokenData(email=email)
-            logger.debug("TokenData object created")
-        except Exception as e:
-            logger.error(f"Error creating TokenData: {str(e)}", exc_info=True)
+        except JWTError:
             raise credentials_exception
         
-        # Step 5: Get user from database
-        logger.debug(f"Step 5: Retrieving user from database: {email}")
         user = await get_user_by_email(email=token_data.email)
         if user is None:
-            logger.warning(f"User not found for token email: {email}")
             raise credentials_exception
         
-        logger.info(f"Current user retrieved successfully: {email}, ID: {user.id}, role: {user.role}")
         return user
-        
     except HTTPException:
-        # Re-raise HTTPException as-is
         raise
     except Exception as e:
-        logger.error(f"Unexpected error getting current user: {str(e)}", exc_info=True)
+        logger.error(f"Error getting current user: {str(e)}", exc_info=True)
         raise credentials_exception
+
+# --- ROLE CHECK DECORATORS (UPDATED) ---
 
 def require_role(required_role: UserRole):
     """Decorator to require specific role"""
-    logger.debug(f"Creating role requirement decorator for role: {required_role}")
-    
     def role_checker(current_user: User = Depends(get_current_user)):
-        logger.debug(f"Checking role requirement - required: {required_role}, user role: {current_user.role}, user email: {current_user.email}")
-        
-        try:
-            if current_user.role != required_role and current_user.role != UserRole.ADMIN:
-                logger.warning(f"Role check failed - user {current_user.email} (role: {current_user.role}) does not have required role: {required_role}")
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Not enough permissions"
-                )
-            logger.debug(f"Role check passed - user {current_user.email} has required role or is admin")
-            return current_user
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Unexpected error in role checker: {str(e)}", exc_info=True)
+        if current_user.role != required_role and current_user.role != UserRole.ADMIN:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error checking user role"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role {required_role} required"
             )
+        return current_user
     return role_checker
 
 def require_admin(current_user: User = Depends(get_current_user)):
     """Require admin role"""
-    logger.debug(f"Checking admin requirement for user: {current_user.email}, role: {current_user.role}")
-    
-    try:
-        if current_user.role != UserRole.ADMIN:
-            logger.warning(f"Admin check failed - user {current_user.email} (role: {current_user.role}) is not admin")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Admin access required"
-            )
-        logger.debug(f"Admin check passed - user {current_user.email} is admin")
-        return current_user
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error in admin check: {str(e)}", exc_info=True)
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error checking admin access"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
         )
+    return current_user
 
-def require_recruiter_or_admin(current_user: User = Depends(get_current_user)):
-    """Require recruiter or admin role"""
-    logger.debug(f"Checking recruiter/admin requirement for user: {current_user.email}, role: {current_user.role}")
-    
-    try:
-        allowed_roles = [UserRole.RECRUITER, UserRole.ADMIN]
-        if current_user.role not in allowed_roles:
-            logger.warning(f"Recruiter/admin check failed - user {current_user.email} (role: {current_user.role}) is not recruiter or admin")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Recruiter or admin access required"
-            )
-        logger.debug(f"Recruiter/admin check passed - user {current_user.email} has required role")
-        return current_user
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error in recruiter/admin check: {str(e)}", exc_info=True)
+def require_talent_manager_or_admin(current_user: User = Depends(get_current_user)):
+    """Require Talent Manager or Admin role (Formerly Recruiter)"""
+    allowed = [UserRole.TALENT_MANAGER, UserRole.ADMIN]
+    if current_user.role not in allowed:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error checking recruiter/admin access"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Talent Manager access required"
         )
+    return current_user
 
-def require_consultant_or_admin(current_user: User = Depends(get_current_user)):
-    """Require consultant or admin role"""
-    logger.debug(f"Checking consultant/admin requirement for user: {current_user.email}, role: {current_user.role}")
-    
-    try:
-        allowed_roles = [UserRole.CONSULTANT, UserRole.ADMIN]
-        if current_user.role not in allowed_roles:
-            logger.warning(f"Consultant/admin check failed - user {current_user.email} (role: {current_user.role}) is not consultant or admin")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Consultant or admin access required"
-            )
-        logger.debug(f"Consultant/admin check passed - user {current_user.email} has required role")
-        return current_user
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error in consultant/admin check: {str(e)}", exc_info=True)
+def require_candidate_or_admin(current_user: User = Depends(get_current_user)):
+    """Require Candidate or Admin role (Formerly Consultant)"""
+    allowed = [UserRole.CANDIDATE, UserRole.ADMIN]
+    if current_user.role not in allowed:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error checking consultant/admin access"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Candidate access required"
         )
+    return current_user

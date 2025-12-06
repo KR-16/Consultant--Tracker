@@ -1,153 +1,129 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  Button,
-  Avatar,
-  Menu,
-  MenuItem,
-} from '@mui/material';
-import { ExitToApp as LogoutIcon } from '@mui/icons-material';
-import { useAuth } from './contexts/AuthContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import CandidateJobs from './pages/candidates/CandidateJobs';
+import CandidateTracker from './pages/candidates/CandidateTracker';
+import CandidateResume from './pages/candidates/CandidateResume';
 
-// --- NEW IMPORTS ---
-import ForgotPassword from './components/auth/ForgotPassword';
-import ResetPassword from './components/auth/ResetPassword';
-// -------------------
+// Layout
+import Layout from './components/layout/Layout';
 
-import ConsultantDashboard from './components/consultant/ConsultantDashboard';
-import RecruiterDashboard from './components/recruiter/RecruiterDashboard';
+// Pages
+import Landing from './pages/Landing';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import Dashboard from './pages/dashboard/Dashboard';
+import UserManagement from './pages/admin/UserManagement';
+import Availability from './pages/Availability';
+import Candidates from './pages/candidates/Candidates'; 
+import Submissions from './pages/submissions/Submissions'; 
+import NotFound from './pages/NotFound';
 
-const Home = () => {
-  const { user } = useAuth();
-  if (user?.role === 'CONSULTANT') {
-    return <Navigate to="/consultant/dashboard" replace />;
-  }
-  if (user?.role === 'RECRUITER' || user?.role === 'ADMIN') {
-    return <Navigate to="/recruiter/dashboard" replace />;
-  }
-  return <Navigate to="/login" replace />;
-};
+// Placeholder for Reports (Create a real file later if needed)
+const Reports = () => (
+  <div className="p-8">
+    <h1 className="text-2xl font-bold text-slate-900">Reports</h1>
+    <p className="text-slate-500 mt-2">Analytics module coming soon.</p>
+  </div>
+);
 
-function App() {
-  const { isAuthenticated, user, logout } = useAuth();
-  const [userMenuAnchor, setUserMenuAnchor] = React.useState(null);
+const queryClient = new QueryClient();
 
-  const handleUserMenuOpen = (event) => {
-    setUserMenuAnchor(event.currentTarget);
-  };
-
-  const handleUserMenuClose = () => {
-    setUserMenuAnchor(null);
-  };
-
-  const handleLogout = () => {
-    logout();
-    handleUserMenuClose();
-    window.location.href = '/login';
-  };
-
-  // If not authenticated, show public auth routes
-  if (!isAuthenticated) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        {/* --- NEW ROUTES --- */}
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        {/* ------------------ */}
-
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    );
-  }
-
+const App = () => {
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Consultant Tracker
-          </Typography>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* --- PUBLIC ROUTES --- */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              {user?.name} ({user?.role})
-            </Typography>
-            <Button
-              color="inherit"
-              onClick={handleUserMenuOpen}
-              sx={{ minWidth: 'auto', p: 0.5 }}
-            >
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
-                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-              </Avatar>
-            </Button>
-          </Box>
+            {/* --- PROTECTED ROUTES (All wrapped in Layout) --- */}
+            
+            
+            {/* Dashboard */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
 
-          <Menu
-            anchorEl={userMenuAnchor}
-            open={Boolean(userMenuAnchor)}
-            onClose={handleUserMenuClose}
-          >
-            <MenuItem disabled>
-              <Typography variant="body2">
-                Role: {user?.role}
-              </Typography>
-            </MenuItem>
-            <MenuItem onClick={handleLogout}>
-              <LogoutIcon sx={{ mr: 1, fontSize: 20 }} />
-              Logout
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
+            {/* Availability */}
+            <Route 
+              path="/availability" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Availability />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
 
-      <Routes>
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        } />
-        
-        {/* Redirect auth pages to home if already logged in */}
-        <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="/register" element={<Navigate to="/" replace />} />
-        <Route path="/forgot-password" element={<Navigate to="/" replace />} />
-        <Route path="/reset-password" element={<Navigate to="/" replace />} />
+            {/* Candidates (Consultants) - Admin & Manager Only */}
+            <Route 
+              path="/candidates" 
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
+                  <Layout>
+                    <Candidates />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
 
-        {/* Consultant Routes */}
-        <Route path="/consultant/*" element={
-          <ProtectedRoute requiredRole="CONSULTANT">
-            <Routes>
-              <Route path="dashboard" element={<ConsultantDashboard />} />
-              <Route path="*" element={<Navigate to="dashboard" replace />} />
-            </Routes>
-          </ProtectedRoute>
-        } />
+            {/* Submissions - Admin & Manager Only */}
+            <Route 
+              path="/submissions" 
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
+                  <Layout>
+                    <Submissions />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
 
-        {/* Recruiter Routes */}
-        <Route path="/recruiter/*" element={
-          <ProtectedRoute requiredRole="RECRUITER">
-            <Routes>
-              <Route path="dashboard" element={<RecruiterDashboard />} />
-              <Route path="*" element={<Navigate to="dashboard" replace />} />
-            </Routes>
-          </ProtectedRoute>
-        } />
+            {/* Reports - Admin & Manager Only */}
+            <Route 
+              path="/reports" 
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'TALENT_MANAGER']}>
+                  <Layout>
+                    <Reports />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Box>
+            {/* --- ADMIN ONLY ROUTES --- */}
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <Layout>
+                    <UserManagement />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* --- CATCH ALL --- */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
   );
-}
+};
 
 export default App;
