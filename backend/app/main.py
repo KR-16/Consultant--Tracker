@@ -1,14 +1,21 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from starlette.middleware.base import BaseHTTPMiddleware
 import os
 import logging
+import time
 from app.db import init_db, close_db
 from app.routers import auth, consultants, jobs, submissions
 from app.config import settings
+from app.logging_config import setup_logging
 
-# Set up logger
+# IMPORTANT: Setup logging FIRST before any other logging
+setup_logging()
+
+# Set up logger (after logging is configured)
 logger = logging.getLogger(__name__)
+access_logger = logging.getLogger("access")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -107,6 +114,61 @@ try:
 
 except Exception as e:
     logger.error(f"Error configuring CORS: {str(e)}", exc_info=True)
+    raise
+
+# Request logging middleware
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    """Middleware to log all API requests for access logging"""
+    
+    async def dispatch(self, request: Request, call_next):
+        # Start time
+        start_time = time.time()
+        
+        # Get client IP
+        client_ip = request.client.host if request.client else "unknown"
+        
+        # Log request
+        access_logger.info(
+            f"{request.method} {request.url.path} - "
+            f"Client: {client_ip} - "
+            f"Query: {dict(request.query_params)}"
+        )
+        
+        try:
+            # Process request
+            response = await call_next(request)
+            
+            # Calculate duration
+            duration = time.time() - start_time
+            
+            # Log response
+            access_logger.info(
+                f"{request.method} {request.url.path} - "
+                f"Status: {response.status_code} - "
+                f"Duration: {duration:.3f}s - "
+                f"Client: {client_ip}"
+            )
+            
+            return response
+            
+        except Exception as e:
+            # Log error
+            duration = time.time() - start_time
+            access_logger.error(
+                f"{request.method} {request.url.path} - "
+                f"ERROR: {str(e)} - "
+                f"Duration: {duration:.3f}s - "
+                f"Client: {client_ip}"
+            )
+            raise
+
+# Add request logging middleware
+logger.info("Adding request logging middleware")
+try:
+    app.add_middleware(RequestLoggingMiddleware)
+    logger.info("Request logging middleware configured successfully")
+except Exception as e:
+    logger.error(f"Error adding request logging middleware: {str(e)}", exc_info=True)
     raise
 
 # Include routers

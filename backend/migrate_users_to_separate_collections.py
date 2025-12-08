@@ -68,12 +68,15 @@ async def migrate_users():
         if recruiters:
             logger.info(f"Migrating {len(recruiters)} recruiters...")
             for user in recruiters:
-                # Remove _id to let MongoDB create new one, or keep it
                 user_doc = dict(user)
                 # Check if email already exists in target collection
                 existing = await db.recruiters.find_one({"email": user_doc.get("email")})
                 if not existing:
                     await db.recruiters.insert_one(user_doc)
+                    # Also ensure it's in users collection
+                    existing_user = await db.users.find_one({"email": user_doc.get("email")})
+                    if not existing_user:
+                        await db.users.insert_one(user_doc)
                     logger.debug(f"Migrated recruiter: {user_doc.get('email')}")
                 else:
                     logger.warning(f"Recruiter with email {user_doc.get('email')} already exists in recruiters collection. Skipping.")
@@ -88,6 +91,10 @@ async def migrate_users():
                 existing = await db.consultants.find_one({"email": user_doc.get("email")})
                 if not existing:
                     await db.consultants.insert_one(user_doc)
+                    # Also ensure it's in users collection
+                    existing_user = await db.users.find_one({"email": user_doc.get("email")})
+                    if not existing_user:
+                        await db.users.insert_one(user_doc)
                     logger.debug(f"Migrated consultant: {user_doc.get('email')}")
                 else:
                     logger.warning(f"Consultant with email {user_doc.get('email')} already exists in consultants collection. Skipping.")
@@ -102,6 +109,10 @@ async def migrate_users():
                 existing = await db.admins.find_one({"email": user_doc.get("email")})
                 if not existing:
                     await db.admins.insert_one(user_doc)
+                    # Also ensure it's in users collection
+                    existing_user = await db.users.find_one({"email": user_doc.get("email")})
+                    if not existing_user:
+                        await db.users.insert_one(user_doc)
                     logger.debug(f"Migrated admin: {user_doc.get('email')}")
                 else:
                     logger.warning(f"Admin with email {user_doc.get('email')} already exists in admins collection. Skipping.")
@@ -116,9 +127,9 @@ async def migrate_users():
         logger.info("=" * 60)
         logger.info("Migration completed successfully!")
         logger.info("=" * 60)
-        logger.info("NOTE: The old 'users' collection still exists.")
-        logger.info("After verifying the migration, you can manually drop it with:")
-        logger.info("  db.users.drop()")
+        logger.info("NOTE: The 'users' collection is maintained as a unified view.")
+        logger.info("All future operations will keep both the role-specific collections")
+        logger.info("and the users collection in sync automatically.")
         logger.info("=" * 60)
         
     except Exception as e:

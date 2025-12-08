@@ -87,12 +87,21 @@ class AdminRepository:
             }
             logger.debug(f"Admin document created with fields: email={user_data.email}, name={user_data.name}, is_active={user_data.is_active}")
             
-            # Step 5: Insert into database
+            # Step 5: Insert into database (both admins collection and users collection)
             logger.debug("Step 5: Inserting admin document into database")
             try:
+                # Insert into admins collection
                 result = await db.admins.insert_one(admin_doc)
                 inserted_id = str(result.inserted_id)
-                logger.info(f"Admin successfully inserted into database with ID: {inserted_id}")
+                logger.info(f"Admin successfully inserted into admins collection with ID: {inserted_id}")
+                
+                # Also insert into users collection for unified view
+                try:
+                    await db.users.insert_one(admin_doc)
+                    logger.debug(f"Admin also inserted into users collection")
+                except Exception as e:
+                    logger.warning(f"Failed to insert into users collection (non-critical): {str(e)}")
+                    # Don't fail the operation if users collection insert fails
             except DuplicateKeyError as e:
                 logger.error(f"Duplicate key error during admin insertion: {str(e)}", exc_info=True)
                 raise ValueError("Email already exists (duplicate key constraint)")
@@ -254,10 +263,21 @@ class AdminRepository:
             logger.debug(f"Added updated_at timestamp to update data")
             
             try:
+                # Update in admins collection
                 result = await db.admins.update_one(
                     {"_id": object_id},
                     {"$set": update_data}
                 )
+                
+                # Also update in users collection
+                try:
+                    await db.users.update_one(
+                        {"_id": object_id},
+                        {"$set": update_data}
+                    )
+                    logger.debug(f"Admin also updated in users collection")
+                except Exception as e:
+                    logger.warning(f"Failed to update users collection (non-critical): {str(e)}")
                 
                 logger.debug(f"Update result - matched: {result.matched_count}, modified: {result.modified_count}")
                 
@@ -300,8 +320,17 @@ class AdminRepository:
             logger.debug("Database connection obtained successfully")
             
             try:
+                # Delete from admins collection
                 result = await db.admins.delete_one({"_id": object_id})
                 deleted = result.deleted_count > 0
+                
+                # Also delete from users collection
+                if deleted:
+                    try:
+                        await db.users.delete_one({"_id": object_id})
+                        logger.debug(f"Admin also deleted from users collection")
+                    except Exception as e:
+                        logger.warning(f"Failed to delete from users collection (non-critical): {str(e)}")
                 
                 if deleted:
                     logger.info(f"Admin successfully deleted: {admin_id}")
@@ -340,10 +369,22 @@ class AdminRepository:
             
             try:
                 update_data = {"is_active": False, "updated_at": datetime.utcnow()}
+                # Update in admins collection
                 result = await db.admins.update_one(
                     {"_id": object_id},
                     {"$set": update_data}
                 )
+                
+                # Also update in users collection
+                if result.modified_count > 0:
+                    try:
+                        await db.users.update_one(
+                            {"_id": object_id},
+                            {"$set": update_data}
+                        )
+                        logger.debug(f"Admin also deactivated in users collection")
+                    except Exception as e:
+                        logger.warning(f"Failed to update users collection (non-critical): {str(e)}")
                 
                 deactivated = result.modified_count > 0
                 logger.debug(f"Deactivation result - matched: {result.matched_count}, modified: {result.modified_count}")
@@ -387,10 +428,22 @@ class AdminRepository:
             
             try:
                 update_data = {"is_active": True, "updated_at": datetime.utcnow()}
+                # Update in admins collection
                 result = await db.admins.update_one(
                     {"_id": object_id},
                     {"$set": update_data}
                 )
+                
+                # Also update in users collection
+                if result.modified_count > 0:
+                    try:
+                        await db.users.update_one(
+                            {"_id": object_id},
+                            {"$set": update_data}
+                        )
+                        logger.debug(f"Admin also activated in users collection")
+                    except Exception as e:
+                        logger.warning(f"Failed to update users collection (non-critical): {str(e)}")
                 
                 activated = result.modified_count > 0
                 logger.debug(f"Activation result - matched: {result.matched_count}, modified: {result.modified_count}")
