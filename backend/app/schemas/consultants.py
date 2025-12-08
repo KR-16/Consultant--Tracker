@@ -7,34 +7,37 @@ logger = logging.getLogger(__name__)
 
 class ConsultantsSchema(CollectionSchema):
     """
-    Schema definition for the consultants collection.
+    Schema definition for the consultant_profiles collection.
+    
+    This is for consultant profiles (experience, tech stack, etc.), separate from consultant users.
+    Consultant users are stored in the 'consultants' collection.
     
     Defines indexes for:
-    - user_id: Unique index for fast lookups by user ID (one-to-one relationship with users)
+    - consultant_id: Unique index for fast lookups by consultant user ID (one-to-one relationship)
     """
     
     @staticmethod
     def get_collection_name() -> str:
-        """Return the MongoDB collection name for consultants"""
-        return "consultants"
+        """Return the MongoDB collection name for consultant profiles"""
+        return "consultant_profiles"
     
     @staticmethod
     async def create_indexes(db) -> None:
         """
-        Create indexes for the consultants collection.
+        Create indexes for the consultant_profiles collection.
         
         Indexes:
-        - user_id: Unique index for fast lookups by user ID
+        - consultant_id: Unique index for fast lookups by consultant user ID
         """
         collection_name = ConsultantsSchema.get_collection_name()
         logger.info(f"Creating indexes for collection: {collection_name}")
         
         try:
-            # Create user_id index (unique) - one consultant profile per user
-            logger.debug(f"Creating user_id index (unique) for {collection_name}")
+            # Create consultant_id index (unique) - one consultant profile per consultant user
+            logger.debug(f"Creating consultant_id index (unique) for {collection_name}")
             try:
-                result = await db.consultants.create_index("user_id", unique=True)
-                logger.info(f"User_id index created successfully for {collection_name}: {result}")
+                result = await db.consultant_profiles.create_index("consultant_id", unique=True)
+                logger.info(f"Consultant_id index created successfully for {collection_name}: {result}")
             except PyMongoError as e:
                 # Index might already exist - check error
                 if "already exists" in str(e).lower() or "duplicate" in str(e).lower():

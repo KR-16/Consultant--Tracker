@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class ConsultantRepository:
     def __init__(self):
-        self.collection_name = "consultants"
+        self.collection_name = "consultant_profiles"
         logger.debug(f"ConsultantRepository initialized")
 
     async def _merge_user_data(self, profile_doc, db):
@@ -21,21 +21,22 @@ class ConsultantRepository:
             if "experience_years" not in profile_doc or profile_doc["experience_years"] is None:
                 profile_doc["experience_years"] = 0.0
 
-            user_id = profile_doc.get("user_id")
-            if not user_id:
-                logger.warning(f"Profile {profile_doc.get('_id')} has no user_id")
+            consultant_id = profile_doc.get("consultant_id")  # Changed from user_id
+            if not consultant_id:
+                logger.warning(f"Profile {profile_doc.get('_id')} has no consultant_id")
                 profile_doc["name"] = "Unknown User"
                 profile_doc["email"] = "N/A"
                 return profile_doc
 
             try:
-                oid = ObjectId(user_id)
+                oid = ObjectId(consultant_id)
             except (InvalidId, TypeError):
-                logger.error(f"Invalid user_id format: {user_id}")
+                logger.error(f"Invalid consultant_id format: {consultant_id}")
                 profile_doc["name"] = "Invalid ID"
                 return profile_doc
 
-            user_data = await db.users.find_one({"_id": oid})
+            # Look up consultant user in consultants collection (not users)
+            user_data = await db.consultants.find_one({"_id": oid})
 
             if user_data:
                 profile_doc["email"] = user_data.get("email", "")
@@ -53,14 +54,14 @@ class ConsultantRepository:
         return profile_doc
 
     async def get_by_user_id(self, user_id: str) -> Optional[ConsultantProfile]:
-        """Get consultant profile by user ID"""
-        logger.debug(f"Getting consultant profile for user ID: {user_id}")
+        """Get consultant profile by consultant user ID"""
+        logger.debug(f"Getting consultant profile for consultant ID: {user_id}")
         try:
             db = await get_database()
             if db is None:
                 raise ValueError("Database connection not available")
 
-            profile_data = await db.consultants.find_one({"user_id": user_id})
+            profile_data = await db.consultant_profiles.find_one({"consultant_id": user_id})
 
             if profile_data:
                 profile_data["id"] = str(profile_data["_id"])
@@ -74,7 +75,7 @@ class ConsultantRepository:
 
     async def create_or_update(self, user_id: str, profile_data: ConsultantProfileUpdate) -> ConsultantProfile:
         """Create or update consultant profile"""
-        logger.info(f"Updating consultant profile for user ID: {user_id}")
+        logger.info(f"Updating consultant profile for consultant ID: {user_id}")
         try:
             db = await get_database()
             if db is None:
@@ -88,7 +89,7 @@ class ConsultantRepository:
 
             defaults = {
                 "created_at": datetime.utcnow(),
-                "user_id": user_id,
+                "consultant_id": user_id,  # Changed from user_id
                 "tech_stack": [],
                 "experience_years": 0.0
             }
@@ -99,8 +100,8 @@ class ConsultantRepository:
             if "tech_stack" in update_data:
                 defaults.pop("tech_stack", None)
 
-            await db.consultants.update_one(
-                {"user_id": user_id},
+            await db.consultant_profiles.update_one(
+                {"consultant_id": user_id},
                 {
                     "$set": update_data,
                     "$setOnInsert": defaults
@@ -123,9 +124,9 @@ class ConsultantRepository:
             
             query = {}
             if user_ids is not None:
-                query["user_id"] = {"$in": user_ids}
+                query["consultant_id"] = {"$in": user_ids}  # Changed from user_id
             
-            cursor = db.consultants.find(query).skip(skip).limit(limit)
+            cursor = db.consultant_profiles.find(query).skip(skip).limit(limit)
             profiles = []
             
             async for doc in cursor:

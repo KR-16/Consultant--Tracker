@@ -32,13 +32,14 @@ class JobRepository:
                 jd_doc["recruiter_email"] = "N/A"
                 return jd_doc
 
-            user_data = await db.users.find_one({"_id": oid})
+            # Look up recruiter in recruiters collection (not users)
+            user_data = await db.recruiters.find_one({"_id": oid})
 
             if user_data:
                 jd_doc["recruiter_name"] = user_data.get("name", "Unknown")
                 jd_doc["recruiter_email"] = user_data.get("email", "")
             else:
-                logger.warning(f"User not found for recruiter_id: {recruiter_id}")
+                logger.warning(f"Recruiter not found for recruiter_id: {recruiter_id}")
                 jd_doc["recruiter_name"] = "Unknown Recruiter"
                 jd_doc["recruiter_email"] = "N/A"
 

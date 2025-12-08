@@ -103,9 +103,9 @@ class SubmissionRepository:
             async for doc in cursor:
                 doc["id"] = str(doc["_id"])
                 
-                # Fetch consultant name and email from users collection
+                # Fetch consultant name and email from consultants collection (not users)
                 try:
-                    consultant_user = await db.users.find_one({"_id": ObjectId(doc["consultant_id"])})
+                    consultant_user = await db.consultants.find_one({"_id": ObjectId(doc["consultant_id"])})
                     if consultant_user:
                         doc["consultant_name"] = consultant_user.get("name", "Unknown")
                         doc["consultant_email"] = consultant_user.get("email", "")
@@ -131,11 +131,11 @@ class SubmissionRepository:
                         doc["jd_tech_required"] = jd.get("tech_required", [])
                         doc["jd_description"] = jd.get("description", "")
                         
-                        # Fetch recruiter who posted the JD
+                        # Fetch recruiter who posted the JD from recruiters collection (not users)
                         jd_recruiter_id = jd.get("recruiter_id")
                         if jd_recruiter_id:
                             try:
-                                recruiter_user = await db.users.find_one({"_id": ObjectId(jd_recruiter_id)})
+                                recruiter_user = await db.recruiters.find_one({"_id": ObjectId(jd_recruiter_id)})
                                 if recruiter_user:
                                     doc["jd_recruiter_name"] = recruiter_user.get("name", "Unknown")
                                     doc["jd_recruiter_email"] = recruiter_user.get("email", "")
@@ -240,7 +240,7 @@ class SubmissionRepository:
                 
                 # Fetch consultant name from users collection
                 try:
-                    consultant_user = await db.users.find_one({"_id": ObjectId(doc["consultant_id"])})
+                    consultant_user = await db.consultants.find_one({"_id": ObjectId(doc["consultant_id"])})
                     if consultant_user:
                         doc["consultant_name"] = consultant_user.get("name", "Unknown")
                     else:

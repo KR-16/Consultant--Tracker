@@ -3,7 +3,9 @@ from fastapi.security import HTTPBearer
 from datetime import timedelta
 import logging
 from app.models import User, UserCreate, UserLogin, Token, UserRole, UserResponse
-from app.repositories.users import UserRepository
+from app.repositories.recruiters import RecruiterRepository
+from app.repositories.consultants_user import ConsultantUserRepository
+from app.repositories.admins import AdminRepository
 from app.auth import authenticate_user, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.db import get_database
 
@@ -11,15 +13,27 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
-# Dependency to get user repository
+# Helper function to get the correct repository based on role
+def get_user_repository_by_role(role: UserRole):
+    """Get the appropriate user repository based on role"""
+    if role == UserRole.RECRUITER:
+        return RecruiterRepository()
+    elif role == UserRole.CONSULTANT:
+        return ConsultantUserRepository()
+    elif role == UserRole.ADMIN:
+        return AdminRepository()
+    else:
+        raise ValueError(f"Unknown role: {role}")
+
+# Dependency to get user repository (for backward compatibility, but should use get_user_repository_by_role)
 def get_user_repository():
-    logger.debug("Creating UserRepository instance")
-    return UserRepository()
+    logger.warning("get_user_repository() is deprecated. Use get_user_repository_by_role() instead.")
+    # Return a default - this should not be used
+    return RecruiterRepository()
 
 @router.post("/register", response_model=UserResponse)
 async def register(
-    user_data: UserCreate,
-    repo: UserRepository = Depends(get_user_repository)
+    user_data: UserCreate
 ):
     """Register a new user"""
     logger.info(f"Registration request received for email: {user_data.email}, role: {user_data.role}")
@@ -28,8 +42,12 @@ async def register(
         # Step 1: Log registration attempt
         logger.debug(f"Step 1: Processing registration for email: {user_data.email}, name: {user_data.name}, role: {user_data.role}")
         
-        # Step 2: Create user via repository
-        logger.debug("Step 2: Calling repository.create() to create user")
+        # Step 2: Get the correct repository based on role
+        logger.debug(f"Step 2: Getting repository for role: {user_data.role}")
+        repo = get_user_repository_by_role(user_data.role)
+        
+        # Step 3: Create user via repository
+        logger.debug("Step 3: Calling repository.create() to create user")
         try:
             user = await repo.create(user_data)
             logger.info(f"User created successfully in repository: {user.email}, ID: {user.id}")
@@ -73,8 +91,7 @@ async def register(
 
 @router.post("/login", response_model=Token)
 async def login(
-    user_credentials: UserLogin,
-    repo: UserRepository = Depends(get_user_repository)
+    user_credentials: UserLogin
 ):
     """Login user and return access token"""
     logger.info(f"Login attempt for email: {user_credentials.email}")
@@ -241,8 +258,7 @@ async def get_all_users(
     skip: int = 0,
     limit: int = 100,
     role: UserRole = None,
-    current_user: User = Depends(get_current_user),
-    repo: UserRepository = Depends(get_user_repository)
+    current_user: User = Depends(get_current_user)
 ):
     """Get all users (Admin only)"""
     logger.info(f"Get all users request from: {current_user.email}, filters - skip: {skip}, limit: {limit}, role: {role}")
@@ -258,10 +274,22 @@ async def get_all_users(
             )
         logger.debug("Admin authorization confirmed")
         
-        # Step 2: Get users from repository
+        # Step 2: Get users from appropriate repository(s)
         logger.debug(f"Step 2: Fetching users from repository with filters")
         try:
-            users = await repo.get_all(skip=skip, limit=limit, role=role)
+            if role:
+                # Get users from specific role repository
+                repo = get_user_repository_by_role(role)
+                users = await repo.get_all(skip=skip, limit=limit)
+            else:
+                # Get users from all repositories
+                all_users = []
+                for user_role in [UserRole.RECRUITER, UserRole.CONSULTANT, UserRole.ADMIN]:
+                    repo = get_user_repository_by_role(user_role)
+                    role_users = await repo.get_all(skip=0, limit=1000)  # Get all, then paginate
+                    all_users.extend(role_users)
+                # Simple pagination (in production, you'd want better pagination)
+                users = all_users[skip:skip+limit]
             logger.debug(f"Retrieved {len(users)} users from repository")
         except ValueError as e:
             logger.error(f"Repository error getting users: {str(e)}", exc_info=True)
@@ -306,8 +334,7 @@ async def get_all_users(
 @router.post("/users", response_model=UserResponse)
 async def create_user(
     user_data: UserCreate,
-    current_user: User = Depends(get_current_user),
-    repo: UserRepository = Depends(get_user_repository)
+    current_user: User = Depends(get_current_user)
 ):
     """Create a new user (Admin only)"""
     logger.info(f"Create user request from admin: {current_user.email}, new user email: {user_data.email}, role: {user_data.role}")
@@ -323,8 +350,12 @@ async def create_user(
             )
         logger.debug("Admin authorization confirmed")
         
-        # Step 2: Create user via repository
-        logger.debug(f"Step 2: Creating user via repository - email: {user_data.email}, role: {user_data.role}")
+        # Step 2: Get the correct repository based on role
+        logger.debug(f"Step 2: Getting repository for role: {user_data.role}")
+        repo = get_user_repository_by_role(user_data.role)
+        
+        # Step 3: Create user via repository
+        logger.debug(f"Step 3: Creating user via repository - email: {user_data.email}, role: {user_data.role}")
         try:
             user = await repo.create(user_data)
             logger.info(f"User created successfully by admin {current_user.email}: {user.email}, ID: {user.id}")

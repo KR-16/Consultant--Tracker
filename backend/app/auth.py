@@ -167,10 +167,16 @@ async def get_user_by_email(email: str) -> Optional[User]:
             logger.error(f"Error getting database connection: {str(e)}", exc_info=True)
             return None
         
-        # Step 3: Query database for user
+        # Step 3: Query database for user across all user collections
         logger.debug(f"Step 3: Querying database for user with email: {email}")
         try:
-            user_data = await db.users.find_one({"email": email})
+            # Check in all three user collections
+            user_data = await db.recruiters.find_one({"email": email})
+            if not user_data:
+                user_data = await db.consultants.find_one({"email": email})
+            if not user_data:
+                user_data = await db.admins.find_one({"email": email})
+            
             if user_data:
                 logger.debug(f"User found in database: {email}")
                 

@@ -17,8 +17,10 @@ import logging
 from app.schemas.base import CollectionSchema
 
 # Import all schema classes to ensure they are registered
-from app.schemas.users import UsersSchema
-from app.schemas.consultants import ConsultantsSchema
+from app.schemas.recruiters import RecruitersSchema
+from app.schemas.consultants_user import ConsultantsUserSchema
+from app.schemas.admins import AdminsSchema
+from app.schemas.consultants import ConsultantsSchema  # This is for consultant_profiles
 from app.schemas.jobs import JobsSchema
 from app.schemas.submissions import SubmissionsSchema
 
@@ -68,8 +70,10 @@ def get_schema_by_collection_name(collection_name: str) -> Type[CollectionSchema
 
 # Auto-register all imported schemas
 # This ensures that when this module is imported, all schemas are registered
-_register_schema(UsersSchema)
-_register_schema(ConsultantsSchema)
+_register_schema(RecruitersSchema)
+_register_schema(ConsultantsUserSchema)
+_register_schema(AdminsSchema)
+_register_schema(ConsultantsSchema)  # consultant_profiles collection
 _register_schema(JobsSchema)
 _register_schema(SubmissionsSchema)
 
@@ -77,7 +81,9 @@ logger.info(f"Schema registry initialized with {len(_registry)} schemas: {[s.get
 
 __all__ = [
     'CollectionSchema',
-    'UsersSchema',
+    'RecruitersSchema',
+    'ConsultantsUserSchema',
+    'AdminsSchema',
     'ConsultantsSchema',
     'JobsSchema',
     'SubmissionsSchema',
