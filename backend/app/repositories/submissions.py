@@ -32,7 +32,10 @@ class SubmissionRepository:
             
             doc = submission_data.dict()
             doc["consultant_id"] = consultant_id
-            doc["recruiter_id"] = recruiter_id
+            # Ensure recruiter_id is stored as string (not ObjectId)
+            recruiter_id_str = str(recruiter_id) if recruiter_id else None
+            doc["recruiter_id"] = recruiter_id_str
+            logger.info(f"Creating submission with recruiter_id: {recruiter_id_str} (original type: {type(recruiter_id).__name__})")
             doc["resume_path"] = resume_path
             doc["status"] = SubmissionStatus.SUBMITTED
             doc["recruiter_read"] = False
@@ -95,7 +98,28 @@ class SubmissionRepository:
             
             query = {}
             if recruiter_id:
-                query["recruiter_id"] = recruiter_id
+                # Ensure recruiter_id is a string for querying
+                recruiter_id_str = str(recruiter_id)
+                logger.debug(f"Querying submissions for recruiter_id: {recruiter_id_str} (type: {type(recruiter_id).__name__})")
+                
+                # Try querying as string first (current format)
+                query["recruiter_id"] = recruiter_id_str
+                
+                # Also try ObjectId format in case of legacy data or type mismatch
+                try:
+                    recruiter_oid = ObjectId(recruiter_id_str)
+                    # Use $or to match both string and ObjectId formats
+                    query = {
+                        "$or": [
+                            {"recruiter_id": recruiter_id_str},
+                            {"recruiter_id": recruiter_oid}
+                        ]
+                    }
+                    logger.debug(f"Using $or query to match both string and ObjectId formats")
+                except (InvalidId, TypeError):
+                    # If not a valid ObjectId format, just use string query
+                    logger.debug(f"recruiter_id is not a valid ObjectId, using string query only")
+                    query["recruiter_id"] = recruiter_id_str
                 
             cursor = db.submissions.find(query).sort("created_at", -1)
             submissions = []
