@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Briefcase, MapPin, Mail, Phone, Star, Loader2, Users as UsersIcon } from 'lucide-react';
+import { User, Briefcase, MapPin, Mail, Phone, Star, Loader2, Users as UsersIcon, Link2, FileText, Download, GraduationCap, Award, ExternalLink } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -35,6 +35,38 @@ const ConsultantList = () => {
 
     const getAvailabilityVariant = (available) => {
         return available ? 'success' : 'secondary';
+    };
+
+    const getProficiencyColor = (proficiency) => {
+        switch (proficiency) {
+            case 'Expert': return 'bg-purple-100 text-purple-800';
+            case 'Advanced': return 'bg-blue-100 text-blue-800';
+            case 'Intermediate': return 'bg-green-100 text-green-800';
+            case 'Beginner': return 'bg-yellow-100 text-yellow-800';
+            default: return 'bg-slate-100 text-slate-800';
+        }
+    };
+
+    const handleDownloadResume = async (consultantId) => {
+        try {
+            const response = await fetch(`/api/consultants/${consultantId}/resume`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `resume_${selectedConsultant?.name || 'consultant'}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            }
+        } catch (error) {
+            console.error('Error downloading resume:', error);
+        }
     };
 
     if (loading) {
@@ -164,7 +196,19 @@ const ConsultantList = () => {
                 </DialogHeader>
                 <DialogContent>
                     {selectedConsultant && (
-                        <div className="space-y-6">
+                        <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+                            {/* Professional Summary */}
+                            {selectedConsultant.professional_summary && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-900 mb-3">Professional Summary</h3>
+                                    <div className="bg-slate-50 rounded-lg p-4">
+                                        <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                                            {selectedConsultant.professional_summary}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Contact Information */}
                             <div>
                                 <h3 className="text-lg font-semibold text-slate-900 mb-3">Contact Information</h3>
@@ -176,14 +220,59 @@ const ConsultantList = () => {
                                             {selectedConsultant.email || '-'}
                                         </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-slate-500 mb-1">Phone</p>
-                                        <div className="flex items-center text-sm text-slate-900">
-                                            <Phone className="h-4 w-4 mr-2 text-slate-400" />
-                                            {selectedConsultant.phone || '-'}
+                                    {selectedConsultant.phone && (
+                                        <div>
+                                            <p className="text-sm text-slate-500 mb-1">Phone</p>
+                                            <div className="flex items-center text-sm text-slate-900">
+                                                <Phone className="h-4 w-4 mr-2 text-slate-400" />
+                                                {selectedConsultant.phone}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                {(selectedConsultant.linkedin_url || selectedConsultant.github_url || selectedConsultant.portfolio_url) && (
+                                    <div className="mt-4">
+                                        <p className="text-sm text-slate-500 mb-2">Links</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedConsultant.linkedin_url && (
+                                                <a
+                                                    href={selectedConsultant.linkedin_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                                                >
+                                                    <Link2 className="h-4 w-4" />
+                                                    LinkedIn
+                                                    <ExternalLink className="h-3 w-3" />
+                                                </a>
+                                            )}
+                                            {selectedConsultant.github_url && (
+                                                <a
+                                                    href={selectedConsultant.github_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                                                >
+                                                    <Link2 className="h-4 w-4" />
+                                                    GitHub
+                                                    <ExternalLink className="h-3 w-3" />
+                                                </a>
+                                            )}
+                                            {selectedConsultant.portfolio_url && (
+                                                <a
+                                                    href={selectedConsultant.portfolio_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                                                >
+                                                    <Link2 className="h-4 w-4" />
+                                                    Portfolio
+                                                    <ExternalLink className="h-3 w-3" />
+                                                </a>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             {/* Professional Details */}
@@ -200,14 +289,18 @@ const ConsultantList = () => {
                                             {selectedConsultant.available ? 'Available' : 'Unavailable'}
                                         </Badge>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-slate-500 mb-1">Location</p>
-                                        <p className="text-sm text-slate-900">{selectedConsultant.location || '-'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-slate-500 mb-1">Visa Status</p>
-                                        <p className="text-sm text-slate-900">{selectedConsultant.visa_status || '-'}</p>
-                                    </div>
+                                    {selectedConsultant.location && (
+                                        <div>
+                                            <p className="text-sm text-slate-500 mb-1">Location</p>
+                                            <p className="text-sm text-slate-900">{selectedConsultant.location}</p>
+                                        </div>
+                                    )}
+                                    {selectedConsultant.visa_status && (
+                                        <div>
+                                            <p className="text-sm text-slate-500 mb-1">Visa Status</p>
+                                            <p className="text-sm text-slate-900">{selectedConsultant.visa_status}</p>
+                                        </div>
+                                    )}
                                     {selectedConsultant.rating && (
                                         <div>
                                             <p className="text-sm text-slate-500 mb-1">Rating</p>
@@ -220,21 +313,82 @@ const ConsultantList = () => {
                                 </div>
                             </div>
 
-                            {/* Technical Skills */}
+                            {/* Education */}
+                            {selectedConsultant.education && (selectedConsultant.education.degree || selectedConsultant.education.university) && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                        <GraduationCap className="h-5 w-5" />
+                                        Education
+                                    </h3>
+                                    <div className="bg-slate-50 rounded-lg p-4">
+                                        {selectedConsultant.education.degree && (
+                                            <p className="text-sm text-slate-900 font-medium">{selectedConsultant.education.degree}</p>
+                                        )}
+                                        {selectedConsultant.education.university && (
+                                            <p className="text-sm text-slate-700">{selectedConsultant.education.university}</p>
+                                        )}
+                                        {selectedConsultant.education.graduation_year && (
+                                            <p className="text-sm text-slate-600">{selectedConsultant.education.graduation_year}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Certifications */}
+                            {selectedConsultant.certifications && selectedConsultant.certifications.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                        <Award className="h-5 w-5" />
+                                        Certifications
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedConsultant.certifications.map((cert, idx) => (
+                                            <Badge key={idx} variant="secondary">
+                                                {cert}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Technical Skills with Proficiency */}
                             <div>
                                 <h3 className="text-lg font-semibold text-slate-900 mb-3">Technical Skills</h3>
                                 <div className="flex flex-wrap gap-2">
                                     {selectedConsultant.tech_stack && selectedConsultant.tech_stack.length > 0 ? (
-                                        selectedConsultant.tech_stack.map((tech, idx) => (
-                                            <Badge key={`${tech}-${idx}`} variant="secondary">
-                                                {tech}
-                                            </Badge>
-                                        ))
+                                        selectedConsultant.tech_stack.map((tech, idx) => {
+                                            const proficiency = selectedConsultant.tech_stack_proficiency?.[tech] || 'Intermediate';
+                                            return (
+                                                <div key={`${tech}-${idx}`} className="flex items-center gap-2">
+                                                    <Badge variant="secondary">{tech}</Badge>
+                                                    <Badge className={`text-xs px-2 py-0.5 ${getProficiencyColor(proficiency)}`}>
+                                                        {proficiency}
+                                                    </Badge>
+                                                </div>
+                                            );
+                                        })
                                     ) : (
                                         <p className="text-sm text-slate-500">No skills listed</p>
                                     )}
                                 </div>
                             </div>
+
+                            {/* Resume */}
+                            {selectedConsultant.resume_path && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                        <FileText className="h-5 w-5" />
+                                        Resume
+                                    </h3>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => handleDownloadResume(selectedConsultant.user_id)}
+                                    >
+                                        <Download className="h-4 w-4 mr-2" />
+                                        Download Resume
+                                    </Button>
+                                </div>
+                            )}
 
                             {/* Notes */}
                             {selectedConsultant.notes && (

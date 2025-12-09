@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ClipboardList, Briefcase, Users } from 'lucide-react';
+import { ClipboardList, Briefcase, Users, User } from 'lucide-react';
 import ConsultantList from './ConsultantList';
 import JobManager from './JobManager';
 import SubmissionBoard from './SubmissionBoard';
+import RecruiterProfile from './RecruiterProfile';
 
 const RecruiterDashboard = () => {
     const [activeTab, setActiveTab] = useState('submissions');
@@ -11,6 +12,7 @@ const RecruiterDashboard = () => {
         { id: 'submissions', label: 'Submissions', icon: ClipboardList },
         { id: 'jobs', label: 'Job Descriptions', icon: Briefcase },
         { id: 'consultants', label: 'Consultants', icon: Users },
+        { id: 'profile', label: 'My Profile', icon: User },
     ];
 
     return (
@@ -53,6 +55,7 @@ const RecruiterDashboard = () => {
                         {activeTab === 'submissions' && <SubmissionBoard />}
                         {activeTab === 'jobs' && <JobManager />}
                         {activeTab === 'consultants' && <ConsultantList />}
+                        {activeTab === 'profile' && <RecruiterProfile />}
                     </div>
                 </div>
             </div>

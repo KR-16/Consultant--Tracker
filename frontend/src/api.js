@@ -66,6 +66,23 @@ export const submissionAPI = {
 export const consultantAPI = {
   getAll: () => api.get('/consultants/'),
   getProfile: () => api.get('/consultants/me'),
+  updateProfile: (data) => api.put('/consultants/me', data),
+  uploadResume: (file) => {
+    const formData = new FormData();
+    formData.append('resume', file);
+    return api.post('/consultants/me/resume', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  downloadResume: () => api.get('/consultants/me/resume', { responseType: 'blob' }),
+  getStats: () => api.get('/consultants/me/stats'),
+};
+
+export const recruiterAPI = {
+  getProfile: () => api.get('/recruiters/me'),
+  updateProfile: (data) => api.put('/recruiters/me', data),
 };
 
 export default api;

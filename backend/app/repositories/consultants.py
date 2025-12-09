@@ -65,6 +65,9 @@ class ConsultantRepository:
 
             if profile_data:
                 profile_data["id"] = str(profile_data["_id"])
+                # Map consultant_id to user_id for the Pydantic model
+                if "consultant_id" in profile_data:
+                    profile_data["user_id"] = profile_data["consultant_id"]
                 profile_data = await self._merge_user_data(profile_data, db)
                 return ConsultantProfile(**profile_data)
 
@@ -82,6 +85,21 @@ class ConsultantRepository:
                 raise ValueError("Database connection not available")
 
             update_data = {k: v for k, v in profile_data.dict().items() if v is not None}
+
+            # Handle phone update - also update in consultants user collection
+            phone = update_data.pop("phone", None)
+            if phone is not None:
+                try:
+                    oid = ObjectId(user_id)
+                    await db.consultants.update_one(
+                        {"_id": oid},
+                        {"$set": {"phone": phone, "updated_at": datetime.utcnow()}}
+                    )
+                    logger.debug(f"Updated phone in consultants collection for user: {user_id}")
+                except (InvalidId, TypeError) as e:
+                    logger.warning(f"Could not update phone in consultants collection: {str(e)}")
+                except Exception as e:
+                    logger.warning(f"Error updating phone in consultants collection: {str(e)}")
 
             update_data.pop("email", None)
 
@@ -131,6 +149,9 @@ class ConsultantRepository:
             
             async for doc in cursor:
                 doc["id"] = str(doc["_id"])
+                # Map consultant_id to user_id for the Pydantic model
+                if "consultant_id" in doc:
+                    doc["user_id"] = doc["consultant_id"]
                 doc = await self._merge_user_data(doc, db)
                 profiles.append(ConsultantProfile(**doc))
                 

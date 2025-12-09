@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
 from enum import Enum
 import logging
@@ -269,6 +269,15 @@ class ConsultantProfileBase(BaseModel):
     visa_status: Optional[str] = None
     rating: Optional[float] = None
     notes: Optional[str] = None
+    professional_summary: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+    portfolio_url: Optional[str] = None
+    education: Optional[Dict] = None  # {degree, university, graduation_year}
+    certifications: List[str] = []
+    phone: Optional[str] = None
+    resume_path: Optional[str] = None
+    tech_stack_proficiency: Optional[Dict[str, str]] = None  # {skill: proficiency_level}
 
 class ConsultantProfileCreate(ConsultantProfileBase):
     pass
@@ -280,6 +289,15 @@ class ConsultantProfileUpdate(BaseModel):
     location: Optional[str] = None
     visa_status: Optional[str] = None
     notes: Optional[str] = None
+    professional_summary: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+    portfolio_url: Optional[str] = None
+    education: Optional[Dict] = None
+    certifications: Optional[List[str]] = None
+    phone: Optional[str] = None
+    resume_path: Optional[str] = None
+    tech_stack_proficiency: Optional[Dict[str, str]] = None
 
 class ConsultantProfile(ConsultantProfileBase):
     id: str
@@ -287,6 +305,30 @@ class ConsultantProfile(ConsultantProfileBase):
     email: Optional[str] = None
     name: Optional[str] = None
     phone: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+# Recruiter Profile Models
+class RecruiterProfileBase(BaseModel):
+    company_name: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
+
+class RecruiterProfileUpdate(BaseModel):
+    company_name: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
+
+class RecruiterProfile(RecruiterProfileBase):
+    id: str
+    user_id: str
+    email: Optional[str] = None
+    name: Optional[str] = None
     
     class Config:
         from_attributes = True

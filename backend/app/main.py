@@ -6,7 +6,7 @@ import os
 import logging
 import time
 from app.db import init_db, close_db
-from app.routers import auth, consultants, jobs, submissions
+from app.routers import auth, consultants, jobs, submissions, recruiters
 from app.config import settings
 from app.logging_config import setup_logging
 
@@ -180,6 +180,7 @@ try:
         app.include_router(consultants.router, prefix=settings.API_PREFIX, tags=["consultants"])
         app.include_router(jobs.router, prefix=settings.API_PREFIX, tags=["jobs"])
         app.include_router(submissions.router, prefix=settings.API_PREFIX, tags=["submissions"])
+        app.include_router(recruiters.router, prefix=settings.API_PREFIX, tags=["recruiters"])
         logger.info(f"All routers registered successfully at {settings.API_PREFIX}")
     except Exception as e:
         logger.error(f"Error including routers: {str(e)}", exc_info=True)

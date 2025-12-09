@@ -4,7 +4,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from pymongo.errors import PyMongoError, DuplicateKeyError
 import logging
-from app.models import User, UserCreate, UserUpdate, UserRole
+from app.models import User, UserCreate, UserUpdate, UserRole, RecruiterProfile, RecruiterProfileUpdate
 from app.auth import get_password_hash
 from app.db import get_database
 
@@ -492,4 +492,51 @@ class RecruiterRepository:
         except Exception as e:
             logger.error(f"Unexpected error while counting recruiters: {str(e)}", exc_info=True)
             raise ValueError(f"Failed to count recruiters: {str(e)}")
+
+    async def get_profile_by_user_id(self, user_id: str) -> Optional[RecruiterProfile]:
+        """Get recruiter profile by user ID"""
+        logger.debug(f"Getting recruiter profile for user ID: {user_id}")
+        try:
+            db = await get_database()
+            if db is None:
+                raise ValueError("Database connection not available")
+
+            recruiter_data = await db.recruiters.find_one({"_id": ObjectId(user_id)})
+
+            if recruiter_data:
+                recruiter_data["id"] = str(recruiter_data["_id"])
+                recruiter_data["user_id"] = user_id
+                return RecruiterProfile(**recruiter_data)
+
+            return None
+        except (InvalidId, TypeError) as e:
+            logger.error(f"Invalid user_id format: {user_id}")
+            raise ValueError(f"Invalid user ID format: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error getting recruiter profile: {str(e)}", exc_info=True)
+            raise
+
+    async def update_profile(self, user_id: str, profile_data: RecruiterProfileUpdate) -> RecruiterProfile:
+        """Update recruiter profile"""
+        logger.info(f"Updating recruiter profile for user ID: {user_id}")
+        try:
+            db = await get_database()
+            if db is None:
+                raise ValueError("Database connection not available")
+
+            update_data = {k: v for k, v in profile_data.dict().items() if v is not None}
+            update_data["updated_at"] = datetime.utcnow()
+
+            await db.recruiters.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": update_data}
+            )
+
+            return await self.get_profile_by_user_id(user_id)
+        except (InvalidId, TypeError) as e:
+            logger.error(f"Invalid user_id format: {user_id}")
+            raise ValueError(f"Invalid user ID format: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error updating recruiter profile: {str(e)}", exc_info=True)
+            raise
 
