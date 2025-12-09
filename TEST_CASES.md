@@ -1,8 +1,9 @@
 # Test Cases - Consultant Tracker Application
 
-**Version:** 1.0  
-**Date:** December 6, 2025  
+**Version:** 2.0  
+**Date:** Updated - December 2025  
 **Environment:** Development  
+**Last Updated:** Includes enhanced profile features, recruiter profiles, and database restructuring  
 **URLs:**
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
@@ -14,13 +15,101 @@
 
 ### Test Data Required
 - **Test Emails:** Use unique emails for each test user
-- **Test Resume:** Prepare PDF, DOC, and DOCX files (< 5MB)
+- **Test Resume:** Prepare PDF, DOC, and DOCX files (< 10MB for profile, < 5MB for applications)
 - **Test Skills:** "React, Python, AWS, Docker, Node.js"
+- **Test URLs:** Valid LinkedIn, GitHub, and Portfolio URLs
 
 ### How to Start
 1. Start Backend: `cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
 2. Start Frontend: `cd frontend && npm start`
 3. Clear browser cache before testing
+4. Ensure MongoDB is running and database is initialized
+
+---
+
+## Application Features Overview
+
+### Consultant Features
+1. **Enhanced Profile Management:**
+   - Basic profile (Tech Stack, Experience, Location, Visa Status, Availability)
+   - Professional Summary (up to 2000 characters)
+   - Contact Links (LinkedIn, GitHub, Portfolio URLs)
+   - Education Details (Degree, University, Graduation Year)
+   - Certifications (multiple, add/remove)
+   - Phone Number (editable)
+   - Resume Upload/Download (PDF, DOC, DOCX, max 10MB)
+   - Skill Proficiency Levels (Beginner, Intermediate, Advanced, Expert)
+   - Profile Completeness Indicator
+   - Application Statistics Dashboard
+
+2. **Job Management:**
+   - Browse Open Jobs
+   - Search and Filter Jobs
+   - Apply to Jobs with Resume Upload
+   - View Application Status
+
+3. **Application Tracking:**
+   - View All Applications
+   - Filter by Status
+   - Search Applications
+   - View Application Statistics
+
+### Recruiter Features
+1. **Profile Management:**
+   - Company/Organization Name
+   - Phone Number
+   - Location
+   - LinkedIn Profile URL
+   - Bio/About Section (up to 1000 characters)
+   - Profile Completeness Indicator
+
+2. **Job Management:**
+   - Create Job Descriptions
+   - Edit Jobs
+   - Close/Open Jobs
+   - View All Jobs
+
+3. **Consultant Management:**
+   - View All Consultants
+   - View Enhanced Consultant Profiles:
+     - Professional Summary
+     - Contact Links (clickable)
+     - Education Details
+     - Certifications
+     - Skill Proficiency Levels
+     - Resume Download
+   - Search and Filter Consultants
+
+4. **Submission Management:**
+   - View All Submissions
+   - Filter by Status
+   - Update Submission Status
+   - Download Resumes
+   - View Submission Details
+
+### Database Structure
+- **Collections:**
+  - `recruiters` - Recruiter user accounts
+  - `consultants` - Consultant user accounts
+  - `admins` - Admin user accounts
+  - `consultant_profiles` - Consultant professional profiles
+  - `job_descriptions` - Job postings
+  - `submissions` - Job applications (with embedded status_history)
+  - `users` - Unified view of all users
+
+### Security Features
+- JWT-based Authentication
+- Role-based Access Control
+- Protected API Endpoints
+- Password Hashing
+- File Upload Validation
+
+### Additional Features
+- Application Statistics (for consultants)
+- Profile Completeness Tracking
+- Real-time Status Updates
+- File Upload/Download
+- Responsive UI Design
 
 ---
 
@@ -240,6 +329,330 @@
 - [ ] Profile completeness indicator updated
 - [ ] Consultant appears in Recruiter's consultant list
 - [ ] Page refreshes with saved data
+
+---
+
+## TC-11A: Add Professional Summary to Profile
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Professional Summary" section
+4. Enter summary: "Experienced full-stack developer with 5+ years..."
+5. Verify character counter shows "X/2000 characters"
+6. Click "Save Profile"
+
+### Expected Results:
+- [ ] Professional summary saved successfully
+- [ ] Character counter updates in real-time
+- [ ] Summary displayed in profile
+- [ ] Summary visible to recruiters when viewing profile
+- [ ] Profile completeness increases
+
+---
+
+## TC-11B: Add Contact Links to Profile
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Contact Links" section
+4. Enter:
+   - LinkedIn: "https://linkedin.com/in/johndoe"
+   - GitHub: "https://github.com/johndoe"
+   - Portfolio: "https://johndoe.dev"
+5. Click "Save Profile"
+
+### Expected Results:
+- [ ] All links saved successfully
+- [ ] Links validated (URL format)
+- [ ] Links visible in profile
+- [ ] Links clickable in recruiter view (open in new tab)
+- [ ] Profile completeness increases
+
+---
+
+## TC-11C: Add Education Details to Profile
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Education" section
+4. Fill in:
+   - Degree: "Master's"
+   - University: "MIT"
+   - Graduation Year: "2020"
+5. Click "Save Profile"
+
+### Expected Results:
+- [ ] Education details saved successfully
+- [ ] All fields saved correctly
+- [ ] Education visible in profile
+- [ ] Education visible to recruiters in profile view
+- [ ] Profile completeness increases
+
+---
+
+## TC-11D: Add Certifications to Profile
+
+**Priority:** Medium  
+**Type:** Functional
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Certifications" section
+4. Enter certification: "AWS Certified Solutions Architect"
+5. Click "+" button to add
+6. Add another: "Google Cloud Professional"
+7. Click "Save Profile"
+
+### Expected Results:
+- [ ] Certifications added as badges
+- [ ] Can add multiple certifications
+- [ ] Can remove certifications (X button)
+- [ ] Certifications saved to database
+- [ ] Certifications visible to recruiters
+- [ ] Profile completeness increases
+
+---
+
+## TC-11E: Update Phone Number in Profile
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Phone Number" section
+4. Enter phone: "+1 (555) 123-4567"
+5. Click "Save Profile"
+
+### Expected Results:
+- [ ] Phone number saved successfully
+- [ ] Phone number displayed in profile info card
+- [ ] Phone number visible to recruiters
+- [ ] Phone number updated in user collection
+- [ ] Profile completeness increases
+
+---
+
+## TC-11F: Upload Resume to Profile
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Resume" section
+4. Click "Choose File" and select a PDF resume (< 10MB)
+5. Click "Upload" button
+6. Wait for upload to complete
+
+### Expected Results:
+- [ ] Resume uploaded successfully
+- [ ] Success message displayed
+- [ ] Resume filename displayed
+- [ ] "Download" button appears
+- [ ] Resume saved in backend/uploads/resumes/
+- [ ] Profile completeness increases
+- [ ] Resume path stored in database
+
+---
+
+## TC-11G: Download Resume from Profile
+
+**Priority:** Medium  
+**Type:** Functional
+
+### Prerequisites:
+- Consultant has uploaded a resume
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Resume" section
+4. Click "Download" button
+
+### Expected Results:
+- [ ] Resume file downloads
+- [ ] Correct filename
+- [ ] File opens successfully
+- [ ] File content matches uploaded file
+
+---
+
+## TC-11H: Replace Existing Resume
+
+**Priority:** Medium  
+**Type:** Functional
+
+### Prerequisites:
+- Consultant has an existing resume uploaded
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Resume" section
+4. Upload a new resume file
+5. Click "Upload"
+
+### Expected Results:
+- [ ] New resume uploaded successfully
+- [ ] Old resume replaced
+- [ ] New filename displayed
+- [ ] Old file deleted from server (optional)
+- [ ] Database updated with new resume path
+
+---
+
+## TC-11I: View Application Statistics
+
+**Priority:** High  
+**Type:** Functional
+
+### Prerequisites:
+- Consultant has submitted at least 3 applications with different statuses
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. View "Application Statistics" section at the top
+
+### Expected Results:
+- [ ] Statistics cards displayed:
+  - Total Applications
+  - Pending (SUBMITTED + ON_HOLD)
+  - Interviews
+  - Offers
+  - Joined
+  - Rejected
+  - Success Rate (%)
+- [ ] All counts are accurate
+- [ ] Success rate calculated correctly: (JOINED + OFFER) / Total * 100
+- [ ] Statistics update when applications change
+
+---
+
+## TC-11J: Add Skill Proficiency Levels
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Technical Skills" section
+4. Enter skill: "React"
+5. Select proficiency: "Advanced" from dropdown
+6. Click "+" button
+7. Add another skill: "Python" with "Expert" proficiency
+8. Click "Save Profile"
+
+### Expected Results:
+- [ ] Skills added with proficiency levels
+- [ ] Proficiency dropdown works for each skill
+- [ ] Skills displayed with proficiency badges (color-coded)
+- [ ] Can update proficiency for existing skills
+- [ ] Proficiency saved to database
+- [ ] Proficiency visible to recruiters
+- [ ] Profile completeness increases when all skills have proficiency
+
+---
+
+## TC-11K: Profile Completeness Calculation
+
+**Priority:** Medium  
+**Type:** Functional
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Observe profile completeness percentage
+4. Fill in different fields and observe completeness change
+
+### Expected Results:
+- [ ] Completeness calculated correctly:
+  - Tech Stack: 10%
+  - Experience: 10%
+  - Location: 5%
+  - Visa Status: 5%
+  - Professional Summary: 10%
+  - Contact Links (at least one): 10%
+  - Education: 10%
+  - Certifications: 5%
+  - Phone: 5%
+  - Resume: 10%
+  - Skill Proficiency (all skills): 10%
+- [ ] Completeness bar updates in real-time
+- [ ] Percentage displayed correctly
+- [ ] Maximum 100%
+
+---
+
+## TC-11L: Resume Upload - Invalid File Type
+
+**Priority:** Medium  
+**Type:** Negative
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Resume" section
+4. Try to upload .txt file
+
+### Expected Results:
+- [ ] File rejected
+- [ ] Error message: "Only PDF, DOC, or DOCX files are allowed"
+- [ ] Upload prevented
+- [ ] No file saved
+
+---
+
+## TC-11M: Resume Upload - File Size Limit
+
+**Priority:** Medium  
+**Type:** Negative
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Resume" section
+4. Try to upload file > 10MB
+
+### Expected Results:
+- [ ] File rejected
+- [ ] Error message: "File size must be less than 10MB"
+- [ ] Upload prevented
+
+---
+
+## TC-11N: Professional Summary Character Limit
+
+**Priority:** Low  
+**Type:** Functional
+
+### Steps:
+1. Login as consultant
+2. Go to "My Profile" tab
+3. Scroll to "Professional Summary"
+4. Enter text exceeding 2000 characters
+
+### Expected Results:
+- [ ] Character counter shows "2000/2000"
+- [ ] Input prevented after 2000 characters
+- [ ] Warning message (if applicable)
 
 ---
 
@@ -594,6 +1007,172 @@
 
 # 3. RECRUITER MODULE
 
+## TC-29A: Create Recruiter Profile - First Time
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as recruiter
+2. Go to "My Profile" tab
+3. Fill in the form:
+   - Company Name: "Tech Recruiters Inc"
+   - Phone: "+1 (555) 987-6543"
+   - Location: "San Francisco, CA"
+   - LinkedIn: "https://linkedin.com/in/recruiter"
+   - Bio: "Experienced recruiter specializing in tech roles..."
+4. Click "Save Profile"
+
+### Expected Results:
+- [ ] Success message displayed (green)
+- [ ] Profile saved to database
+- [ ] All fields displayed in profile info card
+- [ ] Profile completeness indicator updated
+- [ ] Page refreshes with saved data
+
+---
+
+## TC-29B: Update Recruiter Profile
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as recruiter with existing profile
+2. Go to "My Profile" tab
+3. Modify:
+   - Change Company Name to "New Company Name"
+   - Update Bio
+   - Add Location
+4. Click "Save Profile"
+
+### Expected Results:
+- [ ] Success message displayed
+- [ ] Updated data shown immediately
+- [ ] Database updated with new values
+- [ ] Profile completeness updated
+
+---
+
+## TC-29C: Recruiter Profile - Company Name
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as recruiter
+2. Go to "My Profile" tab
+3. Enter company name: "ABC Technologies"
+4. Click "Save Profile"
+5. Check profile info card
+
+### Expected Results:
+- [ ] Company name saved
+- [ ] Company name displayed with building icon
+- [ ] Company name visible in profile info card
+
+---
+
+## TC-29D: Recruiter Profile - Phone Number
+
+**Priority:** High  
+**Type:** Functional
+
+### Steps:
+1. Login as recruiter
+2. Go to "My Profile" tab
+3. Enter phone: "+1 (555) 123-4567"
+4. Click "Save Profile"
+
+### Expected Results:
+- [ ] Phone number saved
+- [ ] Phone number displayed with phone icon
+- [ ] Phone number visible in profile info card
+- [ ] Phone number updated in user collection
+
+---
+
+## TC-29E: Recruiter Profile - Location
+
+**Priority:** Medium  
+**Type:** Functional
+
+### Steps:
+1. Login as recruiter
+2. Go to "My Profile" tab
+3. Enter location: "New York, NY"
+4. Click "Save Profile"
+
+### Expected Results:
+- [ ] Location saved
+- [ ] Location displayed with map pin icon
+- [ ] Location visible in profile info card
+
+---
+
+## TC-29F: Recruiter Profile - LinkedIn URL
+
+**Priority:** Medium  
+**Type:** Functional
+
+### Steps:
+1. Login as recruiter
+2. Go to "My Profile" tab
+3. Enter LinkedIn URL: "https://linkedin.com/in/recruiterprofile"
+4. Click "Save Profile"
+
+### Expected Results:
+- [ ] LinkedIn URL saved
+- [ ] URL validated (must be valid URL format)
+- [ ] LinkedIn link visible in profile
+
+---
+
+## TC-29G: Recruiter Profile - Bio/About
+
+**Priority:** Medium  
+**Type:** Functional
+
+### Steps:
+1. Login as recruiter
+2. Go to "My Profile" tab
+3. Scroll to "Bio/About" section
+4. Enter bio: "I am an experienced recruiter with 10+ years..."
+5. Verify character counter shows "X/1000 characters"
+6. Click "Save Profile"
+
+### Expected Results:
+- [ ] Bio saved successfully
+- [ ] Character counter updates in real-time
+- [ ] Bio displayed in profile
+- [ ] Maximum 1000 characters
+
+---
+
+## TC-29H: Recruiter Profile Completeness
+
+**Priority:** Low  
+**Type:** Functional
+
+### Steps:
+1. Login as recruiter
+2. Go to "My Profile" tab
+3. Observe profile completeness percentage
+4. Fill in different fields and observe completeness change
+
+### Expected Results:
+- [ ] Completeness calculated correctly:
+  - Company Name: 25%
+  - Phone: 20%
+  - LinkedIn: 15%
+  - Bio: 20%
+  - Location: 20%
+- [ ] Completeness bar updates in real-time
+- [ ] Percentage displayed correctly
+- [ ] Maximum 100%
+
+---
+
 ## TC-30: Create Job Description
 
 **Priority:** High  
@@ -711,6 +1290,141 @@
   - Availability
   - Rating (if set)
 - [ ] Can close dialog
+
+---
+
+## TC-34A: View Consultant Profile - Professional Summary
+
+**Priority:** High  
+**Type:** Functional
+
+### Prerequisites:
+- Consultant has added professional summary
+
+### Steps:
+1. Login as recruiter
+2. Go to "Consultants" tab
+3. Click "View Profile" on consultant with summary
+4. Check for professional summary section
+
+### Expected Results:
+- [ ] Professional summary displayed in dialog
+- [ ] Summary text readable and formatted
+- [ ] Summary appears at top of profile details
+
+---
+
+## TC-34B: View Consultant Profile - Contact Links
+
+**Priority:** High  
+**Type:** Functional
+
+### Prerequisites:
+- Consultant has added LinkedIn, GitHub, or Portfolio links
+
+### Steps:
+1. Login as recruiter
+2. Go to "Consultants" tab
+3. Click "View Profile" on consultant with links
+4. Check contact links section
+
+### Expected Results:
+- [ ] Contact links displayed
+- [ ] Links are clickable
+- [ ] Links open in new tab (external link icon)
+- [ ] LinkedIn, GitHub, Portfolio links shown if available
+
+---
+
+## TC-34C: View Consultant Profile - Education
+
+**Priority:** Medium  
+**Type:** Functional
+
+### Prerequisites:
+- Consultant has added education details
+
+### Steps:
+1. Login as recruiter
+2. Go to "Consultants" tab
+3. Click "View Profile" on consultant with education
+4. Check education section
+
+### Expected Results:
+- [ ] Education section displayed
+- [ ] Degree shown
+- [ ] University name shown
+- [ ] Graduation year shown
+- [ ] All fields formatted nicely
+
+---
+
+## TC-34D: View Consultant Profile - Certifications
+
+**Priority:** Medium  
+**Type:** Functional
+
+### Prerequisites:
+- Consultant has added certifications
+
+### Steps:
+1. Login as recruiter
+2. Go to "Consultants" tab
+3. Click "View Profile" on consultant with certifications
+4. Check certifications section
+
+### Expected Results:
+- [ ] Certifications section displayed
+- [ ] All certifications shown as badges
+- [ ] Multiple certifications displayed correctly
+
+---
+
+## TC-34E: View Consultant Profile - Skill Proficiency
+
+**Priority:** High  
+**Type:** Functional
+
+### Prerequisites:
+- Consultant has added skills with proficiency levels
+
+### Steps:
+1. Login as recruiter
+2. Go to "Consultants" tab
+3. Click "View Profile" on consultant with skill proficiency
+4. Check technical skills section
+
+### Expected Results:
+- [ ] Skills displayed with proficiency badges
+- [ ] Proficiency levels color-coded:
+  - Expert: Purple
+  - Advanced: Blue
+  - Intermediate: Green
+  - Beginner: Yellow
+- [ ] Each skill shows its proficiency level
+
+---
+
+## TC-34F: Download Consultant Resume from Profile
+
+**Priority:** High  
+**Type:** Functional
+
+### Prerequisites:
+- Consultant has uploaded a resume
+
+### Steps:
+1. Login as recruiter
+2. Go to "Consultants" tab
+3. Click "View Profile" on consultant with resume
+4. Click "Download Resume" button
+
+### Expected Results:
+- [ ] Resume section displayed in profile
+- [ ] "Download Resume" button visible
+- [ ] Resume file downloads when clicked
+- [ ] Correct filename
+- [ ] File opens successfully
 
 ---
 
@@ -1290,14 +2004,60 @@
 
 ### Steps:
 1. Consultant creates profile
-2. Check MongoDB `consultants` collection
+2. Check MongoDB `consultant_profiles` collection
 
 ### Expected Results:
-- [ ] Consultant document created
-- [ ] user_id references correct user
+- [ ] Consultant profile document created
+- [ ] consultant_id references correct consultant user
 - [ ] tech_stack is array
 - [ ] experience_years is number
 - [ ] All fields match input
+- [ ] professional_summary stored (if provided)
+- [ ] linkedin_url, github_url, portfolio_url stored (if provided)
+- [ ] education object stored (if provided)
+- [ ] certifications array stored (if provided)
+- [ ] tech_stack_proficiency object stored (if provided)
+- [ ] resume_path stored (if resume uploaded)
+
+---
+
+## TC-65A: Recruiter Profile Data Stored
+
+**Priority:** High  
+**Type:** Data Integrity
+
+### Steps:
+1. Recruiter creates profile
+2. Check MongoDB `recruiters` collection
+
+### Expected Results:
+- [ ] Recruiter document updated with profile fields
+- [ ] company_name stored (if provided)
+- [ ] phone stored (if provided)
+- [ ] linkedin_url stored (if provided)
+- [ ] bio stored (if provided)
+- [ ] location stored (if provided)
+- [ ] All fields match input
+
+---
+
+## TC-65B: Database Structure - Separate Collections
+
+**Priority:** High  
+**Type:** Data Integrity
+
+### Steps:
+1. Check MongoDB collections
+2. Verify collection structure
+
+### Expected Results:
+- [ ] `recruiters` collection exists
+- [ ] `consultants` collection exists (for consultant users)
+- [ ] `admins` collection exists
+- [ ] `consultant_profiles` collection exists
+- [ ] `users` collection exists (unified view)
+- [ ] All collections have proper indexes
+- [ ] No `applications`, `interviews`, `status_updates` collections (removed)
 
 ---
 
@@ -1361,28 +2121,36 @@
 ## Critical Path (Must Pass)
 1. TC-01, TC-02 - User Registration
 2. TC-06 - User Login
-3. TC-11 - Create Profile
-4. TC-15 - View Jobs
-5. TC-18 - Apply to Job
-6. TC-30 - Create Job
-7. TC-36 - View Submissions
-8. TC-41 - Update Status
-9. TC-50 - Application Lifecycle
+3. TC-11 - Create Consultant Profile (Basic)
+4. TC-11A - Professional Summary
+5. TC-11E - Phone Number
+6. TC-11F - Resume Upload
+7. TC-11I - Application Statistics
+8. TC-11J - Skill Proficiency
+9. TC-15 - View Jobs
+10. TC-18 - Apply to Job
+11. TC-29A - Create Recruiter Profile
+12. TC-30 - Create Job
+13. TC-34A-F - View Enhanced Consultant Profile (Recruiter)
+14. TC-36 - View Submissions
+15. TC-41 - Update Status
+16. TC-50 - Application Lifecycle
 
 ## Priority Levels
-- **High Priority:** 42 test cases
-- **Medium Priority:** 19 test cases
+- **High Priority:** 55 test cases
+- **Medium Priority:** 28 test cases
 - **Low Priority:** 7 test cases
 
 ## Coverage
 - Authentication: 10 tests
-- Consultant Features: 19 tests
-- Recruiter Features: 16 tests
+- Consultant Features: 32 tests (19 original + 13 new)
+- Recruiter Features: 25 tests (16 original + 9 new)
 - Multi-User: 5 tests
 - Security: 5 tests
 - UI/UX: 5 tests
 - Performance: 3 tests
 - Database: 5 tests
+- **Total: 90 test cases**
 
 ---
 
@@ -1401,6 +2169,11 @@
 - [ ] Take screenshots of failures
 - [ ] Check browser console for errors
 - [ ] Monitor network tab for API errors
+- [ ] Test all new profile features (consultant and recruiter)
+- [ ] Verify application statistics accuracy
+- [ ] Test resume upload/download functionality
+- [ ] Verify skill proficiency display
+- [ ] Check profile completeness calculations
 
 ### After Testing:
 - [ ] Report pass/fail for each test
