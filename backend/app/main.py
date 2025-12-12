@@ -5,10 +5,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import os
 import logging
 import time
-from app.db import init_db, close_db
-from app.routers import auth, consultants, jobs, submissions, recruiters
-from app.config import settings
-from app.logging_config import setup_logging
+from app.core import init_db, close_db, setup_logging, settings
+from app.modules import get_all_modules
 
 # IMPORTANT: Setup logging FIRST before any other logging
 setup_logging()
@@ -171,22 +169,48 @@ except Exception as e:
     logger.error(f"Error adding request logging middleware: {str(e)}", exc_info=True)
     raise
 
-# Include routers
-logger.info("Registering application routers")
+# Import all modules to trigger auto-registration
+# This ensures all modules are registered in the module registry
 try:
-    logger.debug("Including application routers")
-    try:
-        app.include_router(auth.router, prefix=settings.API_PREFIX, tags=["authentication"])
-        app.include_router(consultants.router, prefix=settings.API_PREFIX, tags=["consultants"])
-        app.include_router(jobs.router, prefix=settings.API_PREFIX, tags=["jobs"])
-        app.include_router(submissions.router, prefix=settings.API_PREFIX, tags=["submissions"])
-        app.include_router(recruiters.router, prefix=settings.API_PREFIX, tags=["recruiters"])
-        logger.info(f"All routers registered successfully at {settings.API_PREFIX}")
-    except Exception as e:
-        logger.error(f"Error including routers: {str(e)}", exc_info=True)
-        raise
+    logger.debug("Importing modules to trigger auto-registration")
+    import app.modules.auth
+    import app.modules.consultants
+    import app.modules.recruiters
+    import app.modules.jobs
+    import app.modules.submissions
+    logger.info("All modules imported successfully")
 except Exception as e:
-    logger.error(f"Error registering routers: {str(e)}", exc_info=True)
+    logger.error(f"Error importing modules: {str(e)}", exc_info=True)
+    raise
+
+# Register all modules dynamically
+logger.info("Registering application modules")
+try:
+    logger.debug("Getting all registered modules")
+    modules = get_all_modules()
+    logger.info(f"Found {len(modules)} module(s) to register")
+    
+    for module_class in modules:
+        try:
+            module = module_class()
+            module_name = module.get_module_name()
+            prefix = module.get_prefix()
+            tags = module.get_tags()
+            
+            logger.debug(f"Registering module: {module_name} at {settings.API_PREFIX}{prefix}")
+            app.include_router(
+                module.get_router(),
+                prefix=settings.API_PREFIX,
+                tags=tags
+            )
+            logger.info(f"Module '{module_name}' registered successfully")
+        except Exception as e:
+            logger.error(f"Error registering module {module_class.__name__}: {str(e)}", exc_info=True)
+            raise
+    
+    logger.info(f"All {len(modules)} module(s) registered successfully at {settings.API_PREFIX}")
+except Exception as e:
+    logger.error(f"Error registering modules: {str(e)}", exc_info=True)
     raise
 
 @app.get("/")
