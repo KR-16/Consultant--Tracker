@@ -5,7 +5,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import os
 import logging
 import time
-from app.core import init_db, close_db, setup_logging, settings
+from app.core.db import init_db, close_db
+from app.core.logging_config import setup_logging
+from app.core.config import settings
 from app.modules import get_all_modules
 
 # IMPORTANT: Setup logging FIRST before any other logging
@@ -73,13 +75,13 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application
 logger.info("Creating FastAPI application instance")
 try:
-    app = FastAPI(
+    fastapi_app = FastAPI(
         title=settings.API_TITLE,
         description=settings.API_DESCRIPTION,
         version=settings.API_VERSION,
         lifespan=lifespan
     )
-    logger.info(f"FastAPI application created: {app.title} v{app.version}")
+    logger.info(f"FastAPI application created: {fastapi_app.title} v{fastapi_app.version}")
 except Exception as e:
     logger.critical(f"CRITICAL: Failed to create FastAPI application: {str(e)}", exc_info=True)
     raise
@@ -97,7 +99,7 @@ try:
     # Add CORS middleware
     logger.debug("Adding CORS middleware to application")
     try:
-        app.add_middleware(
+        fastapi_app.add_middleware(
             CORSMiddleware,
             allow_origins=allowed_origins,
             allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
@@ -163,7 +165,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 # Add request logging middleware
 logger.info("Adding request logging middleware")
 try:
-    app.add_middleware(RequestLoggingMiddleware)
+    fastapi_app.add_middleware(RequestLoggingMiddleware)
     logger.info("Request logging middleware configured successfully")
 except Exception as e:
     logger.error(f"Error adding request logging middleware: {str(e)}", exc_info=True)
@@ -198,7 +200,7 @@ try:
             tags = module.get_tags()
             
             logger.debug(f"Registering module: {module_name} at {settings.API_PREFIX}{prefix}")
-            app.include_router(
+            fastapi_app.include_router(
                 module.get_router(),
                 prefix=settings.API_PREFIX,
                 tags=tags
@@ -213,7 +215,7 @@ except Exception as e:
     logger.error(f"Error registering modules: {str(e)}", exc_info=True)
     raise
 
-@app.get("/")
+@fastapi_app.get("/")
 async def root():
     """Root endpoint - API information"""
     logger.debug("Root endpoint accessed")
@@ -232,7 +234,7 @@ async def root():
             detail="Error retrieving API information"
         )
 
-@app.get("/health")
+@fastapi_app.get("/health")
 async def health_check():
     """Health check endpoint"""
     logger.debug("Health check endpoint accessed")
@@ -250,3 +252,7 @@ async def health_check():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Health check failed"
         )
+
+# Export app for uvicorn
+app = fastapi_app
+
