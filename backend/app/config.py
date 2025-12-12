@@ -83,6 +83,14 @@ class Settings:
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
     MAX_UPLOAD_SIZE: int = int(os.getenv("MAX_UPLOAD_SIZE", str(10 * 1024 * 1024)))  # 10MB default
     ALLOWED_RESUME_EXTENSIONS: List[str] = [".pdf", ".doc", ".docx"]
+    ALLOWED_JD_FILE_EXTENSIONS: List[str] = [".pdf", ".doc", ".docx"]
+    
+    # ============================================================================
+    # AI SERVICE CONFIGURATION (Google Gemini)
+    # ============================================================================
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-pro")
+    GEMINI_TIMEOUT: int = int(os.getenv("GEMINI_TIMEOUT", "30"))  # seconds
     
     # ============================================================================
     # LOGGING CONFIGURATION
