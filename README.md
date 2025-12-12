@@ -47,58 +47,126 @@ A comprehensive **modular FastAPI application** for managing consultants, recrui
 ## 📁 Project Structure
 
 ```
-Consultant--Tracker/
-├── backend/
-│   ├── app/
-│   │   ├── main.py                    # FastAPI application entry point
-│   │   │
-│   │   ├── core/                      # Shared infrastructure
-│   │   │   ├── config.py             # Application configuration
-│   │   │   ├── db.py                 # Database connection
-│   │   │   ├── auth.py               # Authentication utilities
-│   │   │   ├── models.py             # Core Pydantic models
-│   │   │   ├── schemas.py            # Base MongoDB schema class
-│   │   │   ├── schema_registry.py    # Schema registration system
-│   │   │   └── logging_config.py    # Logging configuration
-│   │   │
-│   │   └── modules/                   # Business logic modules
-│   │       ├── __init__.py           # Module registry & BaseModule
-│   │       │
-│   │       ├── auth/                 # Authentication module
-│   │       │   ├── router.py         # Auth endpoints
-│   │       │   ├── repository.py    # Auth business logic
-│   │       │   ├── models.py         # Auth models
-│   │       │   ├── schema.py         # Auth schema
-│   │       │   ├── user_repositories/ # User account repositories
-│   │       │   └── user_schemas/     # User account schemas
-│   │       │
-│   │       ├── consultants/          # Consultant profiles module
-│   │       ├── recruiters/           # Recruiter profiles module
-│   │       ├── jobs/                 # Job descriptions module
-│   │       └── submissions/          # Job submissions module
-│   │
-│   ├── logs/                          # Application logs
-│   ├── uploads/                      # File uploads (resumes)
-│   ├── tests/                        # Test files
-│   └── requirements.txt              # Python dependencies
-│
-├── frontend/
-│   ├── src/
-│   │   ├── api.js                    # API client
-│   │   ├── App.js                    # Main app component
-│   │   ├── config.js                 # Frontend configuration
-│   │   ├── components/
-│   │   │   ├── auth/                # Authentication components
-│   │   │   ├── consultant/          # Consultant components
-│   │   │   ├── recruiter/           # Recruiter components
-│   │   │   └── ui/                  # UI components
-│   │   └── contexts/
-│   │       └── AuthContext.js        # Authentication context
-│   └── package.json
-│
-├── CODEBASE_STRUCTURE.md             # Detailed architecture documentation
-├── TEST_CASES.md                     # Test cases documentation
-└── README.md                          # This file
+Consultant--Tracker
+├── CODEBASE_STRUCTURE.md
+├── README.md
+├── TEST_CASES.md
+├── backend
+│   ├── app
+│   │   ├── core
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py
+│   │   │   ├── config.py
+│   │   │   ├── db.py
+│   │   │   ├── logging_config.py
+│   │   │   ├── models.py
+│   │   │   ├── schema_registry.py
+│   │   │   └── schemas.py
+│   │   ├── main.py
+│   │   └── modules
+│   │       ├── __init__.py
+│   │       ├── auth
+│   │       │   ├── __init__.py
+│   │       │   ├── models.py
+│   │       │   ├── module.py
+│   │       │   ├── repository.py
+│   │       │   ├── router.py
+│   │       │   ├── schema.py
+│   │       │   ├── user_repositories
+│   │       │   │   ├── __init__.py
+│   │       │   │   ├── admins.py
+│   │       │   │   ├── consultants_user.py
+│   │       │   │   └── recruiters.py
+│   │       │   └── user_schemas
+│   │       │       ├── __init__.py
+│   │       │       ├── admins.py
+│   │       │       ├── consultants_user.py
+│   │       │       └── recruiters.py
+│   │       ├── consultants
+│   │       │   ├── __init__.py
+│   │       │   ├── models.py
+│   │       │   ├── module.py
+│   │       │   ├── repository.py
+│   │       │   ├── router.py
+│   │       │   └── schema.py
+│   │       ├── jobs
+│   │       │   ├── __init__.py
+│   │       │   ├── models.py
+│   │       │   ├── module.py
+│   │       │   ├── repository.py
+│   │       │   ├── router.py
+│   │       │   └── schema.py
+│   │       ├── recruiters
+│   │       │   ├── __init__.py
+│   │       │   ├── models.py
+│   │       │   ├── module.py
+│   │       │   ├── repository.py
+│   │       │   ├── router.py
+│   │       │   └── schema.py
+│   │       └── submissions
+│   │           ├── __init__.py
+│   │           ├── models.py
+│   │           ├── module.py
+│   │           ├── repository.py
+│   │           ├── router.py
+│   │           └── schema.py
+│   ├── migrate_users_to_separate_collections.py
+│   ├── tests
+│   │   ├── test_consultants.py
+│   │   └── test_submissions.py
+│   └── uploads
+│       
+├── frontend
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── public
+│   │   ├── index.html
+│   │   ├── manifest.json
+│   │   └── robots.txt
+│   ├── src
+│   │   ├── App.js
+│   │   ├── api.js
+│   │   ├── components
+│   │   │   ├── auth
+│   │   │   │   ├── Login.js
+│   │   │   │   ├── ProtectedRoute.js
+│   │   │   │   └── Register.js
+│   │   │   ├── consultant
+│   │   │   │   ├── ConsultantApplications.js
+│   │   │   │   ├── ConsultantDashboard.js
+│   │   │   │   ├── ConsultantJobs.js
+│   │   │   │   └── ConsultantProfile.js
+│   │   │   ├── recruiter
+│   │   │   │   ├── ConsultantList.js
+│   │   │   │   ├── JobManager.js
+│   │   │   │   ├── RecruiterDashboard.js
+│   │   │   │   ├── RecruiterProfile.js
+│   │   │   │   └── SubmissionBoard.js
+│   │   │   └── ui
+│   │   │       ├── badge.jsx
+│   │   │       ├── button.jsx
+│   │   │       ├── card.jsx
+│   │   │       ├── dialog.jsx
+│   │   │       ├── dropdown-menu.jsx
+│   │   │       ├── input.jsx
+│   │   │       └── label.jsx
+│   │   ├── config.js
+│   │   ├── contexts
+│   │   │   └── AuthContext.js
+│   │   ├── index.css
+│   │   ├── index.js
+│   │   └── utils
+│   │       └── cn.js
+│   └── tailwind.config.js
+├── mongo-init
+│   └── init-db.js
+├── pyproject.toml
+├── requirements.txt
+├── sample_data
+│   ├── consultants.csv
+│   └── submissions.csv
+└── uv.lock
 ```
 
 ---
