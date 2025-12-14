@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Users, Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { jwtDecode } from "jwt-decode"; // ✅ Import this to read role
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -13,7 +14,6 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -23,19 +23,31 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-  
     try {
-      await loginUser(email, password);
-      const userRes = await api.get('/auth/me'); 
-      const role = userRes.data.role;
+      // 1. Call Backend Login
+      const data = await loginUser(email, password);
+      console.log("Login API Success:", data);
 
-      if (role === 'CANDIDATE') {
-        navigate('/candidate/jobs');
-      } else {
+      // 2. Update Context
+      login(data.access_token);
+
+      // 3. Decode token to find Role for redirection
+      const decoded = jwtDecode(data.access_token);
+      console.log("Role found:", decoded.role);
+
+      // 4. Navigate based on role
+      if (decoded.role === 'CANDIDATE') {
+        navigate('/candidate/jobs'); // Or /candidate/tracker
+      } else if (decoded.role === 'TALENT_MANAGER' || decoded.role === 'ADMIN') {
         navigate('/dashboard');
+      } else {
+        navigate('/'); // Fallback
       }
+
     } catch (err) {
-      setError('Invalid email or password');
+      console.error("Login Flow Error:", err);
+      // Show specific error if available, else generic
+      setError(err.response?.data?.detail || 'Invalid email or password');
     } finally {
       setLoading(false);
     }

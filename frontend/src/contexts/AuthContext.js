@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { jwtDecode } from "jwt-decode"; 
+import { jwtDecode } from "jwt-decode"; // ✅ Correct named import
 
 const AuthContext = createContext(null);
 
@@ -13,13 +13,19 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        // Backend sends: { sub: "email", role: "ROLE" }
-        setUser({
-          email: decoded.sub,
-          role: decoded.role,
-        });
+        // Check if token is expired
+        const currentTime = Date.now() / 1000;
+        if (decoded.exp < currentTime) {
+            console.warn("Token expired, logging out");
+            localStorage.removeItem('access_token');
+        } else {
+            setUser({
+              email: decoded.sub,
+              role: decoded.role,
+            });
+        }
       } catch (e) {
-        console.error("Invalid token", e);
+        console.error("Invalid token found in storage:", e);
         localStorage.removeItem('access_token');
       }
     }
@@ -27,15 +33,23 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (token) => {
+    console.log("Login function called with token"); 
     localStorage.setItem('access_token', token);
-    const decoded = jwtDecode(token);
-    setUser({
-      email: decoded.sub,
-      role: decoded.role,
-    });
+    
+    try {
+        const decoded = jwtDecode(token);
+        console.log("Decoded user from token:", decoded);
+        setUser({
+          email: decoded.sub,
+          role: decoded.role,
+        });
+    } catch (e) {
+        console.error("Failed to decode token during login:", e);
+    }
   };
 
   const logout = () => {
+    console.log("Logging out...");
     localStorage.removeItem('access_token');
     setUser(null);
   };

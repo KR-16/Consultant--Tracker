@@ -1,15 +1,24 @@
 import client from './client';
 
 // --- Auth Functions ---
+
 export const loginUser = async (email, password) => {
-  const formData = new FormData();
-  formData.append('username', email);
-  formData.append('password', password);
-  const response = await client.post('/auth/login', formData);
+  // Fix: Use URLSearchParams to force application/x-www-form-urlencoded
+  // This is required by FastAPI's OAuth2PasswordRequestForm
+  const params = new URLSearchParams();
+  params.append('username', email); 
+  params.append('password', password);
+
+  const response = await client.post('/auth/login', params, {
+    headers: { 
+      'Content-Type': 'application/x-www-form-urlencoded' 
+    }
+  });
   return response.data;
 };
 
 export const registerUser = async (userData) => {
+  // Registration sends JSON, so the default client settings work fine
   const response = await client.post('/auth/register', userData);
   return response.data;
 };
@@ -18,11 +27,11 @@ export const registerUser = async (userData) => {
 
 // Get all users
 export const getAllUsers = async () => {
-  const response = await client.get('/api/users'); // Note: We will create this backend route next
+  const response = await client.get('/api/users'); 
   return response.data;
 };
 
-// Create a user (Admin)
+// Create a user (Admin manually creating a user)
 export const createUser = async (userData) => {
   const response = await client.post('/api/users', userData);
   return response.data;
