@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import create_access_token, verify_password
 from app.db.session import get_db
-from app.schemas.users import UserCreate, UserResponse, Token
+from app.schemas.users import UserCreate, UserResponse
+from app.schemas.common import Token
 from app.repositories.users import UserRepository
 
 router = APIRouter(prefix="/auth", tags=["auth"])

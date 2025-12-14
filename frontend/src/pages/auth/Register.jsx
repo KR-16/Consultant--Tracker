@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../../api'; // Using your new centralized api.js
+import { registerUser } from '../../api/auth'; // ✅ Correct Import
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -12,7 +12,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // Default to MANAGER since text says "Join Recruitment Teams"
+  // Default role
   const [role, setRole] = useState('TALENT_MANAGER'); 
 
   const [formData, setFormData] = useState({
@@ -38,37 +38,39 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await api.post('/auth/register', {
+      // ✅ Use the new API function
+      await registerUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        role: role // Send selected role
+        role: role
       });
+      
       // Redirect on success
       navigate('/login');
+      
     } catch (err) {
       console.error("Registration Error:", err);
       
       // --- ROBUST ERROR HANDLING ---
-      // 1. Check if backend sent a specific detail message
+      // Check if backend sent a specific detail message
       if (err.response?.data?.detail) {
         const detail = err.response.data.detail;
         
         // Case A: Detail is an array (Pydantic validation error)
         if (Array.isArray(detail)) {
-          // Extract the first error message from the list
           setError(detail[0].msg || "Invalid input data");
         } 
         // Case B: Detail is a simple string (HTTPException)
         else if (typeof detail === 'string') {
           setError(detail);
         }
-        // Case C: Detail is an object or unknown type
+        // Case C: Fallback
         else {
           setError("Registration failed. Please check your inputs.");
         }
       } else {
-        // 2. Fallback for network errors or server crashes
+        // Fallback for network errors
         setError("Registration failed. Server might be down or unreachable.");
       }
     } finally {
@@ -118,7 +120,7 @@ const Register = () => {
             <p className="mt-2 text-slate-500">Enter your details to get started</p>
           </div>
 
-          {/* Subtle Role Toggle */}
+          {/* Role Toggle */}
           <div className="flex bg-slate-100 p-1 rounded-lg">
             <button
               type="button"

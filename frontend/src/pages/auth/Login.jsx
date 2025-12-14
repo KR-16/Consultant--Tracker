@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from '../../api';
+import { loginUser } from '../../api/auth';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../../components/ui/button';
@@ -25,7 +25,7 @@ const Login = () => {
 
   
     try {
-      await login(email, password);
+      await loginUser(email, password);
       const userRes = await api.get('/auth/me'); 
       const role = userRes.data.role;
 

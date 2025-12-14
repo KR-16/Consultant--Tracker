@@ -4,7 +4,7 @@ import { Input } from "../../components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
 import { Label } from "../../components/ui/label";
 import { useAuth } from "../../contexts/AuthContext";
-import api from "../../api";
+import api from "../../api/auth";
 import { Plus, Search, MoreVertical, User as UserIcon, Trash2, Edit } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../components/ui/dropdown-menu";
 
