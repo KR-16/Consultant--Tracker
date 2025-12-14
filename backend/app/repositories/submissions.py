@@ -1,48 +1,42 @@
-from typing import List
-from datetime import datetime
-from bson import ObjectId
-from app.db import get_database
-from app.models import Submission, SubmissionCreate, SubmissionUpdate
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+from app.models.submissions import Submission, SubmissionStatus
+from app.schemas.submissions import SubmissionCreate
 
 class SubmissionRepository:
-    async def create(self, submission: SubmissionCreate, candidate_id: str, manager_id: str) -> Submission:
-        db = await get_database()
-        sub_dict = submission.dict()
-        sub_dict["candidate_id"] = candidate_id
-        sub_dict["talent_manager_id"] = manager_id
-        sub_dict["status"] = "SUBMITTED"
-        sub_dict["created_at"] = datetime.utcnow()
-        sub_dict["updated_at"] = datetime.utcnow()
-        
-        result = await db.submissions.insert_one(sub_dict)
-        
-        return await self.get_by_id(str(result.inserted_id))
+    def create(self, db: Session, sub_in: SubmissionCreate, candidate_id: int):
+        # Check if already applied
+        existing = db.query(Submission).filter(
+            Submission.job_id == sub_in.job_id,
+            Submission.candidate_id == candidate_id
+        ).first()
+        if existing:
+            raise ValueError("You have already applied for this job.")
 
-    async def get_by_id(self, id: str):
-        db = await get_database()
-        data = await db.submissions.find_one({"_id": ObjectId(id)})
-        if data:
-            data["id"] = str(data["_id"])
-            return Submission(**data)
-        return None
+        db_sub = Submission(
+            job_id=sub_in.job_id,
+            candidate_id=candidate_id,
+            resume_used=sub_in.resume_used,
+            status=SubmissionStatus.APPLIED
+        )
+        db.add(db_sub)
+        db.commit()
+        db.refresh(db_sub)
+        return db_sub
 
-    async def get_all(self) -> List[Submission]:
-        db = await get_database()
-        cursor = db.submissions.find()
-        subs = []
-        async for sub in cursor:
-            sub["id"] = str(sub["_id"])
-            
-            # Enrich with Candidate Name
-            cand = await db.users.find_one({"_id": ObjectId(sub["candidate_id"])})
-            if cand:
-                sub["candidate_name"] = cand.get("name")
-                
-            # Enrich with Job Title
-            if "job_id" in sub:
-                job = await db.jobs.find_one({"_id": ObjectId(sub["job_id"])})
-                if job:
-                    sub["jd_title"] = job.get("title")
-            
-            subs.append(Submission(**sub))
-        return subs
+    def get_by_candidate(self, db: Session, candidate_id: int):
+        # Return submissions with Job details loaded
+        return db.query(Submission).filter(Submission.candidate_id == candidate_id).all()
+
+    def get_by_job(self, db: Session, job_id: int):
+        return db.query(Submission).filter(Submission.job_id == job_id).all()
+        
+    def update_status(self, db: Session, submission_id: int, status: SubmissionStatus, ats_score: float = None):
+        submission = db.query(Submission).filter(Submission.id == submission_id).first()
+        if submission:
+            submission.status = status
+            if ats_score is not None:
+                submission.ats_score = ats_score
+            db.commit()
+            db.refresh(submission)
+        return submission

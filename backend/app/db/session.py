@@ -1,0 +1,19 @@
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.core.config import settings
+
+# pool_pre_ping=True helps prevent "server has gone away" errors
+engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    """
+    Dependency function to be used in API routers.
+    Creates a new DB session for a request and closes it afterwards.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

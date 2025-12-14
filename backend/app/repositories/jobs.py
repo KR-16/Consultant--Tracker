@@ -1,27 +1,21 @@
+from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
-from bson import ObjectId
-from app.db import get_database
-from app.models import JobDescription, JobDescriptionCreate, JobDescriptionUpdate
+from app.models.jobs import Job
+from app.schemas.jobs import JobCreate, JobUpdate
 
 class JobRepository:
-    async def create(self, job: JobDescriptionCreate, manager_id: str) -> JobDescription:
-        db = await get_database()
-        job_dict = job.dict()
-        job_dict["talent_manager_id"] = manager_id
-        job_dict["created_at"] = datetime.utcnow()
-        job_dict["updated_at"] = datetime.utcnow()
-        
-        result = await db.jobs.insert_one(job_dict)
-        created_job = await db.jobs.find_one({"_id": result.inserted_id})
-        created_job["id"] = str(created_job["_id"])
-        return JobDescription(**created_job)
+    def create(self, db: Session, job_in: JobCreate, manager_id: int):
+        db_job = Job(**job_in.model_dump(), manager_id=manager_id)
+        db.add(db_job)
+        db.commit()
+        db.refresh(db_job)
+        return db_job
 
-    async def get_all(self, skip: int = 0, limit: int = 100) -> List[JobDescription]:
-        db = await get_database()
-        cursor = db.jobs.find().sort("created_at", -1).skip(skip).limit(limit)
-        jobs = []
-        async for job in cursor:
-            job["id"] = str(job["_id"])
-            jobs.append(JobDescription(**job))
-        return jobs
+    def get_all(self, db: Session, skip: int = 0, limit: int = 100):
+        return db.query(Job).filter(Job.is_active == True).offset(skip).limit(limit).all()
+
+    def get_by_manager(self, db: Session, manager_id: int):
+        return db.query(Job).filter(Job.manager_id == manager_id).all()
+
+    def get_by_id(self, db: Session, job_id: int):
+        return db.query(Job).filter(Job.id == job_id).first()

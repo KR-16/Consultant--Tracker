@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api'; // <--- Import the new api connection
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { jwtDecode } from "jwt-decode"; 
 
 const AuthContext = createContext(null);
 
@@ -8,44 +8,35 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    // Check for token on app startup
+    const token = localStorage.getItem('access_token');
     if (token) {
-      // Use api.get (no need to manually add headers, api.js does it)
-      api.get('/auth/me')
-        .then(response => setUser(response.data))
-        .catch(() => {
-          localStorage.removeItem('token');
-          setUser(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+      try {
+        const decoded = jwtDecode(token);
+        // Backend sends: { sub: "email", role: "ROLE" }
+        setUser({
+          email: decoded.sub,
+          role: decoded.role,
+        });
+      } catch (e) {
+        console.error("Invalid token", e);
+        localStorage.removeItem('access_token');
+      }
     }
+    setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      // Login endpoint expects a JSON body matching LoginRequest schema
-      const response = await api.post('/auth/login', { 
-        identifier: email, 
-        password: password 
-      });
-
-      const { access_token } = response.data;
-      localStorage.setItem('token', access_token);
-
-      // Fetch user details immediately
-      const userResponse = await api.get('/auth/me');
-      setUser(userResponse.data);
-      return true;
-    } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
-    }
+  const login = (token) => {
+    localStorage.setItem('access_token', token);
+    const decoded = jwtDecode(token);
+    setUser({
+      email: decoded.sub,
+      role: decoded.role,
+    });
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
     setUser(null);
   };
 

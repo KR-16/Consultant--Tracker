@@ -1,50 +1,50 @@
-from typing import List, Optional
-from datetime import datetime
-from app.db import get_database
-from app.models import UserCreate, User, UserRole
-from app.auth import get_password_hash
+from sqlalchemy.orm import Session
+from app.models.users import User, CandidateProfile, UserRole
+from app.schemas.users import UserCreate, CandidateProfileUpdate
+from app.core.security import get_password_hash
 
 class UserRepository:
-    async def create(self, user: UserCreate) -> User:
-        db = await get_database()
-        
-        # Check if email exists
-        existing_user = await db.users.find_one({"email": user.email})
-        if existing_user:
-            raise ValueError("Email already registered")
-            
-        # Prepare data
-        user_dict = user.dict()
-        user_dict["hashed_password"] = get_password_hash(user.password)
-        del user_dict["password"]
-        user_dict["created_at"] = datetime.utcnow()
-        user_dict["updated_at"] = datetime.utcnow()
-        
-        # Insert
-        result = await db.users.insert_one(user_dict)
-        
-        # Return created user
-        created_user = await db.users.find_one({"_id": result.inserted_id})
-        created_user["id"] = str(created_user["_id"])
-        return User(**created_user)
+    def get_by_email(self, db: Session, email: str):
+        return db.query(User).filter(User.email == email).first()
 
-    async def get_by_email(self, email: str) -> Optional[User]:
-        db = await get_database()
-        user_data = await db.users.find_one({"email": email})
-        if user_data:
-            user_data["id"] = str(user_data["_id"])
-            return User(**user_data)
-        return None
+    def get_by_id(self, db: Session, user_id: int):
+        return db.query(User).filter(User.id == user_id).first()
 
-    async def get_all(self, skip: int = 0, limit: int = 100, role: Optional[UserRole] = None) -> List[User]:
-        db = await get_database()
-        query = {}
-        if role:
-            query["role"] = role.value
+    def create(self, db: Session, user_in: UserCreate):
+        hashed_password = get_password_hash(user_in.password)
+        db_user = User(
+            email=user_in.email,
+            name=user_in.name,
+            hashed_password=hashed_password,
+            role=user_in.role,
+            is_active=user_in.is_active
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        
+        # If user is a candidate, create an empty profile automatically
+        if user_in.role == UserRole.CANDIDATE:
+            profile = CandidateProfile(user_id=db_user.id)
+            db.add(profile)
+            db.commit()
             
-        cursor = db.users.find(query).skip(skip).limit(limit)
-        users = []
-        async for user_data in cursor:
-            user_data["id"] = str(user_data["_id"])
-            users.append(User(**user_data))
-        return users
+        return db_user
+
+    def update_candidate_profile(self, db: Session, user_id: int, profile_in: CandidateProfileUpdate):
+        profile = db.query(CandidateProfile).filter(CandidateProfile.user_id == user_id).first()
+        if not profile:
+            profile = CandidateProfile(user_id=user_id)
+            db.add(profile)
+        
+        # Update fields only if they are provided
+        update_data = profile_in.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(profile, field, value)
+            
+        db.commit()
+        db.refresh(profile)
+        return profile
+    
+    def get_candidate_profile(self, db: Session, user_id: int):
+        return db.query(CandidateProfile).filter(CandidateProfile.user_id == user_id).first()

@@ -1,21 +1,20 @@
 version: '3.8'
 
 services:
-  # 🐍 Backend (FastAPI)
   backend:
     build: ./backend
     container_name: recruitops_backend
     ports:
       - "8000:8000"
     environment:
-      - MONGODB_URL=mongodb://mongo:27017/recruitops
+      # Connection string format: postgresql://<user>:<password>@<host>:<port>/<db_name>
+      - DATABASE_URL=postgresql://recruit_user:recruit_password@postgres:5432/recruitops_db
       - SECRET_KEY=dev_secret_key
     depends_on:
-      - mongo
+      - postgres
     volumes:
-      - ./backend:/app  # Hot reload for development
+      - ./backend:/app  # Maps local folder to container for hot reload
 
-  # ⚛️ Frontend (React)
   frontend:
     build: ./frontend
     container_name: recruitops_frontend
@@ -23,21 +22,24 @@ services:
       - "3000:3000"
     environment:
       - REACT_APP_API_URL=http://localhost:8000/api
-      - WATCHPACK_POLLING=true # Fixes react hot-reload in docker
+      - WATCHPACK_POLLING=true  # Required for hot reloading in Docker on some systems
     depends_on:
       - backend
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - /app/node_modules  # Prevents local node_modules from overriding container ones
 
-  # 🍃 Database (MongoDB)
-  mongo:
-    image: mongo:latest
-    container_name: recruitops_mongo
+  postgres:
+    image: postgres:15-alpine
+    container_name: recruitops_db
     ports:
-      - "27017:27017"
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=recruit_user
+      - POSTGRES_PASSWORD=recruit_password
+      - POSTGRES_DB=recruitops_db
     volumes:
-      - mongo_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  mongo_data:
+  postgres_data:

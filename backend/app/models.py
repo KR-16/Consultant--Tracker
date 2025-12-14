@@ -1,23 +1,18 @@
-from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, List
-from datetime import datetime
-from enum import Enum
-import logging
+from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, DateTime, Enum as SQLEnum, Text
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import ARRAY  
 
-# Set up logger
-logger = logging.getLogger(__name__)
+from app.db import Base
+import enum
 
-# --- 1. ENUMS ---
-
-class UserRole(str, Enum):
+# --- Enums for Database ---
+class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
-    TALENT_MANAGER = "TALENT_MANAGER"  
-    CANDIDATE = "CANDIDATE"            
-    
-    def __str__(self):
-        return self.value
+    TALENT_MANAGER = "TALENT_MANAGER"
+    CANDIDATE = "CANDIDATE"
 
-class SubmissionStatus(str, Enum):
+class SubmissionStatus(str, enum.Enum):
     SUBMITTED = "SUBMITTED"
     INTERVIEW = "INTERVIEW"
     OFFER = "OFFER"
@@ -26,154 +21,84 @@ class SubmissionStatus(str, Enum):
     ON_HOLD = "ON_HOLD"
     WITHDRAWN = "WITHDRAWN"
 
-# --- 2. AUTH & USER MODELS ---
+# --- Database Tables ---
 
-class UserBase(BaseModel):
-    email: EmailStr
-    name: str = Field(..., min_length=1, max_length=100)
-    role: UserRole
-    is_active: bool = True
+class User(Base):
+    __tablename__ = "users"
 
-class UserCreate(UserBase):
-    password: str = Field(..., min_length=6, description="Password must be at least 6 characters")
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    role = Column(SQLEnum(UserRole), default=UserRole.CANDIDATE, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+
+    # Relationships
+    candidate_profile = relationship("CandidateProfile", back_populates="user", uselist=False)
+    jobs_posted = relationship("Job", back_populates="manager")
+    submissions_received = relationship("Submission", back_populates="manager")
+
+class CandidateProfile(Base):
+    __tablename__ = "candidate_profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     
-    @validator('password')
-    def validate_password_length(cls, v):
-        """Ensure password doesn't exceed 72 bytes (bcrypt limitation)"""
-        if not v:
-            raise ValueError("Password is required")
-        
-        try:
-            password_bytes = v.encode('utf-8')
-            if len(password_bytes) > 72:
-                raise ValueError("Password is too long (max 72 bytes)")
-            if len(v) < 6:
-                raise ValueError("Password must be at least 6 characters")
-            return v
-        except Exception as e:
-            logger.error(f"Password validation error: {str(e)}")
-            raise ValueError("Invalid password format")
+    # Manager who "owns" or is assigned to this candidate
+    assigned_manager_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-class UserUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
-    role: Optional[UserRole] = None
-    is_active: Optional[bool] = None
-
-class UserResponse(UserBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class User(UserBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
-    hashed_password: str
-
-    class Config:
-        from_attributes = True
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    email: Optional[str] = None
-    role: Optional[str] = None
-
-# --- 3. CANDIDATE PROFILE  ---
-
-class CandidateProfileBase(BaseModel):
-    experience_years: float = Field(..., ge=0)
-    skills: List[str] = [] 
-    available: bool = True
-    location: Optional[str] = None
-    visa_status: Optional[str] = None
-    rating: Optional[float] = None
-    notes: Optional[str] = None
-    resume_url: Optional[str] = None
-    assigned_manager_id: Optional[str] = None  # 👈 NEW FIELD
-
-class CandidateProfileCreate(CandidateProfileBase):
-    pass
-
-class CandidateProfileUpdate(BaseModel):
-    experience_years: Optional[float] = None
-    skills: Optional[List[str]] = None
-    available: Optional[bool] = None
-    location: Optional[str] = None
-    visa_status: Optional[str] = None
-    resume_url: Optional[str] = None
-    assigned_manager_id: Optional[str] = None 
-
-class CandidateProfile(CandidateProfileBase):
-    id: str
-    user_id: str
-    email: Optional[str] = None
-    name: Optional[str] = None
-    phone: Optional[str] = None
+    experience_years = Column(Float, default=0.0)
+    # Using Postgres ARRAY for skills. e.g. ["Python", "Docker"]
+    skills = Column(ARRAY(String), default=list) 
+    available = Column(Boolean, default=True)
+    location = Column(String, nullable=True)
+    visa_status = Column(String, nullable=True)
+    rating = Column(Float, nullable=True)
+    notes = Column(Text, nullable=True)
+    resume_url = Column(String, nullable=True)
     
-    class Config:
-        from_attributes = True
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], back_populates="candidate_profile")
+    manager = relationship("User", foreign_keys=[assigned_manager_id])
+    submissions = relationship("Submission", back_populates="candidate")
 
-# --- 4. JOB DESCRIPTIONS ---
+class Job(Base):
+    __tablename__ = "jobs"
 
-class JobDescriptionBase(BaseModel):
-    title: str = Field(..., min_length=1)
-    description: str
-    experience_required: float = Field(..., ge=0)
-    skills_required: List[str] = []
-    location: Optional[str] = None
-    status: str = "OPEN"
-
-class JobDescriptionCreate(JobDescriptionBase):
-    pass
-
-class JobDescriptionUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    experience_required: Optional[float] = None
-    skills_required: Optional[List[str]] = None
-    location: Optional[str] = None
-    status: Optional[str] = None
-
-class JobDescription(JobDescriptionBase):
-    id: str
-    talent_manager_id: str
-    created_at: datetime
-    updated_at: datetime
+    id = Column(Integer, primary_key=True, index=True)
+    talent_manager_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
-    class Config:
-        from_attributes = True
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    experience_required = Column(Float, default=0.0)
+    skills_required = Column(ARRAY(String), default=list)
+    location = Column(String, nullable=True)
+    status = Column(String, default="OPEN")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
 
-# --- 5. SUBMISSIONS ---
+    # Relationships
+    manager = relationship("User", back_populates="jobs_posted")
+    submissions = relationship("Submission", back_populates="job")
 
-class SubmissionBase(BaseModel):
-    job_id: str
-    comments: Optional[str] = None
+class Submission(Base):
+    __tablename__ = "submissions"
 
-class SubmissionCreate(SubmissionBase):
-    pass
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("jobs.id"), nullable=False)
+    candidate_id = Column(Integer, ForeignKey("candidate_profiles.id"), nullable=False)
+    talent_manager_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-class SubmissionUpdate(BaseModel):
-    status: Optional[SubmissionStatus] = None
-    comments: Optional[str] = None
-    manager_read: Optional[bool] = None
+    status = Column(SQLEnum(SubmissionStatus), default=SubmissionStatus.SUBMITTED)
+    comments = Column(Text, nullable=True)
+    manager_read = Column(Boolean, default=False)
+    resume_path = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
 
-class Submission(SubmissionBase):
-    id: str
-    candidate_id: str
-    talent_manager_id: str
-    resume_path: Optional[str] = None
-    status: SubmissionStatus
-    manager_read: bool = False
-    created_at: datetime
-    updated_at: datetime
-    candidate_name: Optional[str] = None
-    job_title: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
+    # Relationships
+    job = relationship("Job", back_populates="submissions")
+    candidate = relationship("CandidateProfile", back_populates="submissions")
+    manager = relationship("User", back_populates="submissions_received")

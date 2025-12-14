@@ -11,13 +11,12 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 # 2. Database Connection URL
-# Ensure this matches your .env or docker-compose
 MONGODB_URL = "mongodb://localhost:27017" 
 
 # 3. Define Demo Users
 demo_users = [
     {
-        "_id": "admin_user_id", # Hardcoded IDs for simplicity
+        "_id": "admin_user_id", 
         "email": "admin@recruitops.com",
         "name": "System Admin",
         "role": "ADMIN",
@@ -48,16 +47,16 @@ async def seed_database():
         
         # Test connection
         await client.admin.command('ping')
-        print("✅ MongoDB Connected!")
+        print("MongoDB Connected!")
 
-        print("🚀 Seeding Users...")
+        print("Seeding Users...")
         
         for user in demo_users:
             # Check if user exists
             existing = await db.users.find_one({"email": user["email"]})
             
             if existing:
-                print(f"   ⚠️  Skipping {user['email']} (Already exists)")
+                print(f"Skipping {user['email']} (Already exists)")
                 continue
 
             # Create User Document
@@ -74,11 +73,11 @@ async def seed_database():
             await db.users.insert_one(user_doc)
             print(f"   ✅ Created {user['role']}: {user['email']}")
             
-        print("\n🎉 Database Seeded Successfully!")
-        print("👉 You can now login with password: password123")
+        print("\nDatabase Seeded Successfully!")
+        print("You can now login with password: password123")
 
     except Exception as e:
-        print(f"❌ Error seeding database: {str(e)}")
+        print(f"Error seeding database: {str(e)}")
     finally:
         client.close()
 
