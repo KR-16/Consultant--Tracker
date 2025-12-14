@@ -1,166 +1,141 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
-import { Label } from "../../components/ui/label";
-import { useAuth } from "../../contexts/AuthContext";
-import api from "../../api/auth";
-import { Plus, Search, MoreVertical, User as UserIcon, Trash2, Edit } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../components/ui/dropdown-menu";
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAllUsers, deleteUser, updateUser, createUser } from '../../api/auth';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
+import { Plus, Trash2, Edit, Search } from 'lucide-react';
+import { useToast } from '../../components/ui/use-toast';
 
 const UserManagement = () => {
-  const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [managers, setManagers] = useState([]); // List of managers for dropdown
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'CANDIDATE' });
   
-  const [newUser, setNewUser] = useState({
-    name: "",
-    email: "",
-    password: "password123",
-    role: "CANDIDATE",
-    assignedManager: "" 
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  // 1. Fetch Users
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: getAllUsers
   });
 
-  // Fetch Users & Filter Managers
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get('/users'); 
-      setUsers(res.data);
-      // Filter out just the managers for the dropdown
-      setManagers(res.data.filter(u => u.role === 'TALENT_MANAGER'));
-    } catch (error) {
-      console.error("Failed to fetch users", error);
-    } finally {
-      setLoading(false);
+  // 2. Mutations (Delete & Create)
+  const deleteMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['users']);
+      toast({ title: "User deleted" });
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const handleAddUser = async () => {
-    try {
-      // 1. Create the User Account
-      const userRes = await api.post('/users', {
-        name: newUser.name,
-        email: newUser.email,
-        password: newUser.password,
-        role: newUser.role
-      });
-
-      // 2. If it's a Candidate AND a manager is selected, create their profile immediately with assignment
-      if (newUser.role === 'CANDIDATE' && newUser.assignedManager) {
-        
-        // Here we simulate creating the profile with the assignment:
-        await api.post('/candidates/profile', {
-           experience_years: 0, // defaults
-           assigned_manager_id: newUser.assignedManager
-        }); 
-      }
-
-      fetchUsers();
+  const createMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['users']);
       setIsDialogOpen(false);
-      setNewUser({ name: "", email: "", password: "password123", role: "CANDIDATE", assignedManager: "" });
-      alert("User created successfully");
-    } catch (error) {
-      alert("Failed: " + (error.response?.data?.detail || error.message));
+      setNewUser({ name: '', email: '', password: '', role: 'CANDIDATE' });
+      toast({ title: "User created" });
+    },
+    onError: (err) => {
+      toast({ variant: "destructive", title: "Error", description: err.response?.data?.detail || "Failed" });
     }
+  });
+
+  // Handle Create Submit
+  const handleCreate = (e) => {
+    e.preventDefault();
+    createMutation.mutate(newUser);
   };
 
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch = (u.name?.toLowerCase() || "").includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "all" || u.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  const filteredUsers = users.filter(user => 
+    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (isLoading) return <div className="p-8">Loading users...</div>;
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto space-y-8">
+    <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
-        
+        <h1 className="text-2xl font-bold">User Management</h1>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-slate-900 text-white hover:bg-slate-800">
-              <Plus className="w-4 h-4 mr-2" /> Add User
-            </Button>
+            <Button><Plus className="mr-2 h-4 w-4" /> Add User</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
-                  value={newUser.role}
-                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                >
-                  <option value="ADMIN">Admin</option>
-                  <option value="TALENT_MANAGER">Talent Manager</option>
-                  <option value="CANDIDATE">Candidate</option>
-                </select>
-              </div>
-
-              {/* 👈 ASSIGN MANAGER DROPDOWN (Only if role is Candidate) */}
-              {newUser.role === 'CANDIDATE' && (
-                <div className="space-y-2">
-                  <Label>Assign to Manager</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
-                    value={newUser.assignedManager}
-                    onChange={(e) => setNewUser({ ...newUser, assignedManager: e.target.value })}
-                  >
-                    <option value="">-- Select Manager --</option>
-                    {managers.map(m => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <Button onClick={handleAddUser} className="w-full bg-slate-900 text-white">Create User</Button>
-            </div>
+            <DialogHeader><DialogTitle>Add New User</DialogTitle></DialogHeader>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <Input placeholder="Name" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} required />
+              <Input placeholder="Email" type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} required />
+              <Input placeholder="Password" type="password" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} required />
+              <select 
+                className="w-full border rounded p-2" 
+                value={newUser.role} 
+                onChange={e => setNewUser({...newUser, role: e.target.value})}
+              >
+                <option value="CANDIDATE">Candidate</option>
+                <option value="TALENT_MANAGER">Talent Manager</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+              <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Creating..." : "Create User"}
+              </Button>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* List Display (Simplified for brevity) */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
-            <tr>
-              <th className="px-6 py-4">Name</th>
-              <th className="px-6 py-4">Email</th>
-              <th className="px-6 py-4">Role</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-slate-50">
-                <td className="px-6 py-4 font-medium text-slate-900">{user.name}</td>
-                <td className="px-6 py-4 text-slate-500">{user.email}</td>
-                <td className="px-6 py-4"><span className="bg-slate-100 px-2 py-1 rounded text-xs font-semibold">{user.role}</span></td>
-                <td className="px-6 py-4 text-right"><MoreVertical className="w-4 h-4 ml-auto text-slate-400" /></td>
-              </tr>
+      <div className="flex items-center space-x-2">
+        <Search className="h-4 w-4 text-gray-500" />
+        <Input 
+          placeholder="Search users..." 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
+
+      <div className="border rounded-lg shadow-sm bg-white">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredUsers.map((u) => (
+              <TableRow key={u.id}>
+                <TableCell className="font-medium">{u.name}</TableCell>
+                <TableCell>{u.email}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded text-xs font-bold ${
+                    u.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
+                    u.role === 'TALENT_MANAGER' ? 'bg-purple-100 text-purple-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {u.role}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className={`h-2 w-2 rounded-full inline-block mr-2 ${u.is_active ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                  {u.is_active ? 'Active' : 'Inactive'}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" className="text-red-500" onClick={() => deleteMutation.mutate(u.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

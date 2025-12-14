@@ -1,89 +1,73 @@
-import asyncio
-import os
-from motor.motor_asyncio import AsyncIOMotorClient
-from passlib.context import CryptContext
-from datetime import datetime
+import logging
+from sqlalchemy.orm import Session
+from app.db.session import SessionLocal
+from app.core.security import get_password_hash
 
-# 1. Setup Password Hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# --- CRITICAL FIX: Import ALL models so they are registered ---
+from app.models.users import User, UserRole, CandidateProfile
+from app.models.jobs import Job           # <--- Needed for relationship resolution
+from app.models.submissions import Submission # <--- Needed for relationship resolution
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# 2. Database Connection URL
-MONGODB_URL = "mongodb://localhost:27017" 
-
-# 3. Define Demo Users
-demo_users = [
-    {
-        "_id": "admin_user_id", 
-        "email": "admin@recruitops.com",
-        "name": "System Admin",
-        "role": "ADMIN",
-        "password": "password123"
-    },
-    {
-        "_id": "manager_user_id",
-        "email": "manager@recruitops.com",
-        "name": "Hiring Manager",
-        "role": "TALENT_MANAGER",
-        "password": "password123"
-    },
-    {
-        "_id": "candidate_user_id",
-        "email": "candidate@recruitops.com",
-        "name": "John Doe",
-        "role": "CANDIDATE",
-        "password": "password123"
-    }
-]
-
-async def seed_database():
-    print("🌱 Connecting to MongoDB at", MONGODB_URL)
+def seed_users():
+    db: Session = SessionLocal()
     
+    users = [
+        {
+            "email": "admin@recruitops.com",
+            "name": "Admin User",
+            "password": "password123",
+            "role": UserRole.ADMIN
+        },
+        {
+            "email": "manager@recruitops.com",
+            "name": "Talent Manager",
+            "password": "password123",
+            "role": UserRole.TALENT_MANAGER
+        },
+        {
+            "email": "candidate@recruitops.com",
+            "name": "Candidate User",
+            "password": "password123",
+            "role": UserRole.CANDIDATE
+        }
+    ]
+
     try:
-        client = AsyncIOMotorClient(MONGODB_URL)
-        db = client.recruitops
-        
-        # Test connection
-        await client.admin.command('ping')
-        print("MongoDB Connected!")
-
-        print("Seeding Users...")
-        
-        for user in demo_users:
-            # Check if user exists
-            existing = await db.users.find_one({"email": user["email"]})
+        for user_data in users:
+            existing_user = db.query(User).filter(User.email == user_data["email"]).first()
             
-            if existing:
-                print(f"Skipping {user['email']} (Already exists)")
-                continue
-
-            # Create User Document
-            user_doc = {
-                "email": user["email"],
-                "name": user["name"],
-                "role": user["role"],
-                "hashed_password": get_password_hash(user["password"]),
-                "is_active": True,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
-            }
-
-            await db.users.insert_one(user_doc)
-            print(f"   ✅ Created {user['role']}: {user['email']}")
-            
-        print("\nDatabase Seeded Successfully!")
-        print("You can now login with password: password123")
-
+            if not existing_user:
+                logger.info(f"Creating user: {user_data['email']}")
+                new_user = User(
+                    email=user_data["email"],
+                    name=user_data["name"],
+                    hashed_password=get_password_hash(user_data["password"]),
+                    role=user_data["role"],
+                    is_active=True
+                )
+                db.add(new_user)
+                db.commit()
+                db.refresh(new_user)
+                
+                # If candidate, create empty profile
+                if user_data["role"] == UserRole.CANDIDATE:
+                    profile = CandidateProfile(user_id=new_user.id)
+                    db.add(profile)
+                    db.commit()
+            else:
+                logger.info(f"User already exists: {user_data['email']}")
+                
     except Exception as e:
-        print(f"Error seeding database: {str(e)}")
+        logger.error(f"Error seeding database: {e}")
+        db.rollback()
     finally:
-        client.close()
+        db.close()
 
 if __name__ == "__main__":
-    # Windows specific event loop policy fix
-    if os.name == 'nt':
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-        
-    asyncio.run(seed_database())
+    logger.info("Starting database seed...")
+    seed_users()
+    logger.info("Database seed completed.")

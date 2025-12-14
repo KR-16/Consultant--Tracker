@@ -3,7 +3,7 @@ import axios from 'axios';
 // 1. Create the Axios instance
 const apiClient = axios.create({
   // Ensure this matches your backend URL (usually port 8000)
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000', 
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000', 
   headers: {
     'Content-Type': 'application/json',
   },

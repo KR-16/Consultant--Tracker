@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     
     # Database
-    # Defaulting to the docker service name 'postgres'
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://recruit_user:recruit_password@postgres:5432/recruitops_db")
+   # Default to localhost for local development
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://recruit_user:recruit_password@localhost:5432/recruitops_db")
     
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "CHANGE_THIS_TO_A_SECURE_SECRET_KEY")
