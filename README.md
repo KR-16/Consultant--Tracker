@@ -1,8 +1,7 @@
 # Consultant Tracker
+A comprehensive full-stack Recruitment & Applicant Tracking System (ATS) built with a modular FastAPI backend and a responsive React frontend, powered by a PostgreSQL relational database. The system manages consultants, recruiters, job postings, and job submissions using a clean, scalable architecture that supports role-based access control (RBAC).
 
-A comprehensive full-stack Recruitment & Applicant Tracking System (ATS) built with a modular FastAPI backend and a responsive React frontend, powered by a PostgreSQL relational database. The system manages consultants, recruiters, job postings, and job submissions using a clean, scalable architecture that supports role-based access control (RBAC) and dynamic module registration.
-
-## 🚀 Features
+## Features
 
 ### Core Features
 - Role-Based Access Control (RBAC) - Admin, Talent Manager, and Candidate roles.
@@ -156,44 +155,24 @@ Consultant-Tracker
 └── package.json
 ```
 
----
-
-## 🏗 Architecture
-
-The application follows a **modular architecture** pattern:
-
-- **Core Layer**: Shared infrastructure (config, database, auth, logging)
-- **Modules Layer**: Self-contained business modules
-- **Dynamic Registration**: Modules are automatically discovered and registered
-
-Each module contains:
-- `router.py` - API endpoints
-- `repository.py` - Business logic & data access
-- `models.py` - Pydantic models
-- `schema.py` - MongoDB collection schema
-- `module.py` - Module class implementing BaseModule
-
-For detailed architecture documentation, see [CODEBASE_STRUCTURE.md](./CODEBASE_STRUCTURE.md).
-
----
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - **Python 3.8+**
-- **Node.js 16+** and npm
+- **Node.js 16+** 
+- **PostgreSQL(Local installation OR Docker Desktop)**
 
 
 ### Backend Setup
 
 1. **Navigate to backend directory:**
-   ```bash
+   ```
    cd backend
    ```
 
 2. **Create and activate virtual environment:**
-   ```bash
+   ```
    # Windows
    python -m venv .venv
    .venv\Scripts\activate
@@ -204,71 +183,56 @@ For detailed architecture documentation, see [CODEBASE_STRUCTURE.md](./CODEBASE_
    ```
 
 3. **Install dependencies:**
-   ```bash
+   ```
    pip install -r requirements.txt
    ```
 
-   Or using `uv` (recommended):
-   ```bash
-   uv pip install -r requirements.txt
+4. **Configure environment variables:(Create a .env file inside the backend/ directory)**
+   ```
+   # Update user/password/db to match your local Postgres setup
+   DATABASE_URL=postgresql://recruit_user:recruit_password@localhost:5432/recruitops_db
+   SECRET_KEY=your_secret_key_here
+   ACCESS_TOKEN_EXPIRE_MINUTES=30
    ```
 
-4. **Configure environment variables** (optional):
-   ```bash
-   # Create .env file or set environment variables
-   export MONGODB_URL="mongodb://localhost:27017"
-   export DATABASE_NAME="consultant_tracker"
-   export SECRET_KEY="your-secret-key-here"
-   export ACCESS_TOKEN_EXPIRE_MINUTES=30
-   export CORS_ORIGINS="http://localhost:3000,http://localhost:3001"
+5. **Run Database Migrations**
    ```
-
-5. **Start MongoDB:**
-   - Make sure MongoDB is running on `localhost:27017`
-   - Or update `MONGODB_URL` to point to your MongoDB instance
+   alembic upgrade head
+   ```
 
 6. **Run the backend:**
-   ```bash
+   ```
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
-
    The API will be available at:
-   - API: `http://localhost:8000/api`
-   - Docs: `http://localhost:8000/docs` (Swagger UI)
-   - ReDoc: `http://localhost:8000/redoc`
+   - Docs: `http://localhost:8000/docs` 
+
 
 ### Frontend Setup
 
 1. **Navigate to frontend directory:**
-   ```bash
+   ```
    cd frontend
    ```
 
 2. **Install dependencies:**
-   ```bash
+   ```
    npm install
    ```
 
-3. **Configure API URL** (if needed):
-   - Default: `http://localhost:8000/api`
-   - Update in `src/config.js` or set `REACT_APP_API_URL` environment variable
-
-4. **Start the frontend:**
-   ```bash
+3. **Start the frontend:**
+   ```
    npm start
    ```
-
-   The frontend will run on `http://localhost:3000` (or next available port).
+   The frontend will run on `http://localhost:3000`.
 
 ---
-
-## 📡 API Endpoints
 
 ### Authentication (`/api/auth`)
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| POST | `/api/auth/register` | Register a new user | No |
+| POST | `/auth/login` | Register a new user | No |
 | POST | `/api/auth/login` | Login user | No |
 | GET | `/api/auth/me` | Get current user info | Yes |
 | POST | `/api/auth/refresh` | Refresh access token | Yes |
@@ -379,81 +343,4 @@ Authorization: Bearer <access_token>
 
 ---
 
-## ⚙️ Environment Variables
-
-### Backend
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MONGODB_URL` | MongoDB connection string | `mongodb://localhost:27017` |
-| `DATABASE_NAME` | Database name | `consultant_tracker` |
-| `SECRET_KEY` | JWT secret key | `your-secret-key-change-this-in-production` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration (minutes) | `30` |
-| `CORS_ORIGINS` | Comma-separated allowed origins | `http://localhost:3000,http://localhost:3001` |
-| `API_PREFIX` | API route prefix | `/api` |
-
-### Frontend
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `REACT_APP_API_URL` | Backend API URL | `http://localhost:8000/api` |
-
----
-
-## 📊 Database Schema
-
-### Collections
-
-**User Collections:**
-- `admins` - Admin user accounts
-- `consultants` - Consultant user accounts
-- `recruiters` - Recruiter user accounts
-
-**Profile Collections:**
-- `consultant_profiles` - Consultant professional profiles
-- `recruiter_profiles` - Recruiter profiles
-
-**Business Collections:**
-- `job_descriptions` - Job postings
-- `submissions` - Job applications
-
-### Indexes
-
-Each collection has optimized indexes:
-- User collections: `email` (unique), `is_active`
-- Profile collections: `user_id` (unique), `email`
-- Business collections: Various indexes for query optimization
-
----
-
-
-## 📚 Documentation
-
-- **[CODEBASE_STRUCTURE.md](./CODEBASE_STRUCTURE.md)** - Detailed architecture documentation
-- **[TEST_CASES.md](./TEST_CASES.md)** - Test cases and scenarios
-- **API Documentation**: Available at `http://localhost:8000/docs` (Swagger UI)
-
----
-
-## 🔧 Development
-
-### Logging
-
-Logs are stored in `backend/logs/`:
-- `app.log` - General application logs
-- `errors.log` - Error logs only
-- `access.log` - API access logs
-
-### File Uploads
-
-Uploaded files (resumes) are stored in `backend/uploads/`.
-
-### Code Structure
-
-- **Core**: Shared infrastructure in `app/core/`
-- **Modules**: Business logic in `app/modules/`
-- **Repository Pattern**: Data access abstraction
-- **Dependency Injection**: FastAPI's dependency system
-
----
 
