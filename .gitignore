@@ -50,3 +50,5 @@ yarn-debug.log*
 # Mac/Windows system files
 .DS_Store
 Thumbs.db
+
+.vscode
