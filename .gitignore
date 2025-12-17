@@ -44,11 +44,10 @@ yarn-debug.log*
 # Docker
 .docker_volumes/
 
-# 💻 Editor / OS Files
+# Editor / OS Files
 .vscode/
 
 # Mac/Windows system files
 .DS_Store
 Thumbs.db
 
-.vscode
