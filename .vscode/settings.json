@@ -6,7 +6,7 @@
             "server": "localhost",
             "port": 5432,
             "driver": "PostgreSQL",
-            "name": "RecruitOps",
+            "name": "RecruitOps Local",
             "database": "recruitops_db",
             "username": "recruit_user",
             "password": "recruit_password"
