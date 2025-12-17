@@ -1,18 +1,52 @@
-# Python
+# Backend (Python / FastAPI)
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+backend/.venv/
+backend/venv/
+.venv/
 venv/
-.venv
 
-# Node/React
+# Environment Variables
+backend/.env
+.env
+
+# Logs
+backend/logs/
+*.log
+
+# Database
+*.sqlite3
+*.db
+RecruitOps.session.sql
+
+# Alembic Migrations
+backend/alembic/__pycache__/
+
+# Frontend (React / Node)
+frontend/node_modules/
 node_modules/
-build/
-dist/
-.npm/
-frontend/package-lock.json  
 
-# Docker 
+# Build Outputs
+frontend/build/
+frontend/dist/
+
+# Environment Variables
+frontend/.env
+frontend/.env.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+
+# Docker
 .docker_volumes/
 
-# OS
+# 💻 Editor / OS Files
+.vscode/
+
+# Mac/Windows system files
 .DS_Store
+Thumbs.db
