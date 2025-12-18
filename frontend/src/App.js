@@ -19,7 +19,7 @@ import Candidates from './pages/candidates/Candidates';
 import Submissions from './pages/submissions/Submissions'; 
 import CandidateJobs from './pages/candidates/CandidateJobs';
 import CandidateTracker from './pages/candidates/CandidateTracker';
-import CandidateResume from './pages/candidates/CandidateResume';
+import CandidateProfile from './pages/candidates/CandidateProfile'; // ✅ Changed from CandidateResume
 import CandidateJobDetails from './pages/candidates/CandidateJobDetails';
 
 const Reports = () => <div className="p-8"><h1 className="text-2xl font-bold">Reports</h1></div>;
@@ -37,22 +37,44 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* APP SHELL (Layout) */}
+            {/* APP SHELL (Layout applies to all routes below) */}
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                 
                 {/* 1. Dashboard (Open to ALL roles) */}
                 <Route path="/dashboard" element={<Dashboard />} />
+                
+                {/* Redirect generic dashboard links */}
+                <Route path="/candidate/dashboard" element={<Dashboard />} />
 
                 {/* 2. Candidate Specific Pages */}
-                <Route path="/candidate/jobs/:id" element={
-                <ProtectedRoute allowedRoles={['CANDIDATE']}>
-                <Layout>
-                <CandidateJobDetails />
-                </Layout>
-                </ProtectedRoute>
+                {/* Job Board List */}
+                <Route path="/candidate/jobs" element={
+                  <ProtectedRoute allowedRoles={['CANDIDATE']}>
+                    <CandidateJobs />
+                  </ProtectedRoute>
                 } />
-                <Route path="/candidate/tracker" element={<CandidateTracker />} />
-                <Route path="/candidate/resume" element={<CandidateResume />} />
+
+                {/* Job Details */}
+                <Route path="/candidate/jobs/:id" element={
+                  <ProtectedRoute allowedRoles={['CANDIDATE']}>
+                    <CandidateJobDetails />
+                  </ProtectedRoute>
+                } />
+
+                {/* Tracker */}
+                <Route path="/candidate/tracker" element={
+                  <ProtectedRoute allowedRoles={['CANDIDATE']}>
+                    <CandidateTracker />
+                  </ProtectedRoute>
+                } />
+
+                {/* Profile & Resume Management */}
+                {/* ✅ Updated Route Path & Component */}
+                <Route path="/candidate/profile" element={
+                  <ProtectedRoute allowedRoles={['CANDIDATE']}>
+                    <CandidateProfile />
+                  </ProtectedRoute>
+                } />
 
                 {/* 3. Manager & Admin Pages */}
                 <Route path="/candidates" element={
@@ -88,6 +110,7 @@ const App = () => {
 
             </Route>
 
+            {/* 404 Page */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

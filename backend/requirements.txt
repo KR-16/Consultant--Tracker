@@ -22,7 +22,7 @@ pydantic-settings>=2.2.0     # Environment-based config management
 # =========================
 python-jose[cryptography]>=3.3.0  # JWT token handling
 passlib[bcrypt]>=1.7.4            # Password hashing
-bcrypt>=4.0.1                     # Secure hashing backend
+bcrypt==3.2.2                   # Secure hashing backend
 
 # =========================
 # Forms & Email Validation
