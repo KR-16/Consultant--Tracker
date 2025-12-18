@@ -20,6 +20,7 @@ import Submissions from './pages/submissions/Submissions';
 import CandidateJobs from './pages/candidates/CandidateJobs';
 import CandidateTracker from './pages/candidates/CandidateTracker';
 import CandidateResume from './pages/candidates/CandidateResume';
+import CandidateJobDetails from './pages/candidates/CandidateJobDetails';
 
 const Reports = () => <div className="p-8"><h1 className="text-2xl font-bold">Reports</h1></div>;
 
@@ -43,7 +44,13 @@ const App = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
 
                 {/* 2. Candidate Specific Pages */}
-                <Route path="/candidate/jobs" element={<CandidateJobs />} />
+                <Route path="/candidate/jobs/:id" element={
+                <ProtectedRoute allowedRoles={['CANDIDATE']}>
+                <Layout>
+                <CandidateJobDetails />
+                </Layout>
+                </ProtectedRoute>
+                } />
                 <Route path="/candidate/tracker" element={<CandidateTracker />} />
                 <Route path="/candidate/resume" element={<CandidateResume />} />
 
