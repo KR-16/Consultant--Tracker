@@ -1,136 +1,173 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAllUsers, deleteUser, updateUser, createUser } from '../../api/auth';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Button } from '../../components/ui/button';
+import { 
+  Search, MoreVertical, Trash2, Shield, 
+  CheckCircle, XCircle, Filter 
+} from 'lucide-react';
+import { 
+  Table, TableBody, TableCell, TableHead, 
+  TableHeader, TableRow 
+} from '../../components/ui/table';
+import { 
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
+  DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator 
+} from '../../components/ui/dropdown-menu';
 import { Input } from '../../components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { Plus, Trash2, Edit, Search } from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
 import { useToast } from '../../components/ui/use-toast';
 
 const UserManagement = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'CANDIDATE' });
-  
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // 1. Fetch Users
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: getAllUsers
-  });
+  // Mock Users Data
+  const [users, setUsers] = useState([
+    { id: 1, name: "Admin User", email: "admin@recruitops.com", role: "ADMIN", status: "Active", lastLogin: "2 mins ago" },
+    { id: 2, name: "Sarah Recruiter", email: "sarah@recruitops.com", role: "TALENT_MANAGER", status: "Active", lastLogin: "1 hour ago" },
+    { id: 3, name: "John Candidate", email: "john@gmail.com", role: "CANDIDATE", status: "Active", lastLogin: "2 days ago" },
+    { id: 4, name: "Jane Smith", email: "jane@yahoo.com", role: "CANDIDATE", status: "Inactive", lastLogin: "1 month ago" },
+    { id: 5, name: "Mike Manager", email: "mike@recruitops.com", role: "TALENT_MANAGER", status: "Active", lastLogin: "5 hours ago" },
+  ]);
 
-  // 2. Mutations (Delete & Create)
-  const deleteMutation = useMutation({
-    mutationFn: deleteUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['users']);
-      toast({ title: "User deleted" });
-    }
-  });
-
-  const createMutation = useMutation({
-    mutationFn: createUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['users']);
-      setIsDialogOpen(false);
-      setNewUser({ name: '', email: '', password: '', role: 'CANDIDATE' });
-      toast({ title: "User created" });
-    },
-    onError: (err) => {
-      toast({ variant: "destructive", title: "Error", description: err.response?.data?.detail || "Failed" });
-    }
-  });
-
-  // Handle Create Submit
-  const handleCreate = (e) => {
-    e.preventDefault();
-    createMutation.mutate(newUser);
-  };
-
+  // Handle Search
   const filteredUsers = users.filter(user => 
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isLoading) return <div className="p-8">Loading users...</div>;
+  // Handle Delete
+  const handleDeleteUser = (id) => {
+    if (window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+      setUsers(users.filter(u => u.id !== id));
+      toast({
+        title: "User Deleted",
+        description: "The user has been permanently removed.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle Role Change
+  const handleRoleChange = (id, newRole) => {
+    setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
+    toast({
+      title: "Role Updated",
+      description: `User role changed to ${newRole.replace('_', ' ')}.`,
+      className: "bg-blue-50 border-blue-200"
+    });
+  };
+
+  const getRoleBadge = (role) => {
+    switch (role) {
+      case 'ADMIN': return 'bg-red-100 text-red-700 border-red-200';
+      case 'TALENT_MANAGER': return 'bg-purple-100 text-purple-700 border-purple-200';
+      default: return 'bg-blue-100 text-blue-700 border-blue-200';
+    }
+  };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-8 max-w-[1400px] mx-auto">
+      
+      {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">User Management</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Add User</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Add New User</DialogTitle></DialogHeader>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <Input placeholder="Name" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} required />
-              <Input placeholder="Email" type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} required />
-              <Input placeholder="Password" type="password" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} required />
-              <select 
-                className="w-full border rounded p-2" 
-                value={newUser.role} 
-                onChange={e => setNewUser({...newUser, role: e.target.value})}
-              >
-                <option value="CANDIDATE">Candidate</option>
-                <option value="TALENT_MANAGER">Talent Manager</option>
-                <option value="ADMIN">Admin</option>
-              </select>
-              <Button type="submit" className="w-full" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Create User"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">User Management</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            Manage system access, update roles, and audit user activity.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500 mr-2">Total Users: {users.length}</span>
+        </div>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Search className="h-4 w-4 text-gray-500" />
-        <Input 
-          placeholder="Search users..." 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
+      {/* Filters & Search */}
+      <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900">
+        <CardContent className="p-4 flex items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Input 
+              placeholder="Search by name or email..." 
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button variant="outline">
+            <Filter className="w-4 h-4 mr-2" /> Filter
+          </Button>
+        </CardContent>
+      </Card>
 
-      <div className="border rounded-lg shadow-sm bg-white">
+      {/* Users Table */}
+      <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
+            <TableRow className="bg-slate-50 dark:bg-slate-950">
+              <TableHead>User</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Last Login</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell className="font-medium">{u.name}</TableCell>
-                <TableCell>{u.email}</TableCell>
+            {filteredUsers.map((user) => (
+              <TableRow key={user.id}>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs font-bold ${
-                    u.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
-                    u.role === 'TALENT_MANAGER' ? 'bg-purple-100 text-purple-800' :
-                    'bg-blue-100 text-blue-800'
-                  }`}>
-                    {u.role}
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-slate-900 dark:text-white">{user.name}</span>
+                    <span className="text-xs text-slate-500">{user.email}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${getRoleBadge(user.role)}`}>
+                    {user.role.replace('_', ' ')}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className={`h-2 w-2 rounded-full inline-block mr-2 ${u.is_active ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                  {u.is_active ? 'Active' : 'Inactive'}
+                  <div className="flex items-center gap-2">
+                    {user.status === 'Active' ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-slate-400" />
+                    )}
+                    <span className="text-sm">{user.status}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-slate-500 text-sm">
+                  {user.lastLogin}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="text-red-500" onClick={() => deleteMutation.mutate(u.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      
+                      <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'CANDIDATE')}>
+                        Set as Candidate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'TALENT_MANAGER')}>
+                        Set as Talent Manager
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'ADMIN')}>
+                        <Shield className="w-3 h-3 mr-2 text-red-500" /> Promote to Admin
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        className="text-red-600 focus:bg-red-50"
+                        onClick={() => handleDeleteUser(user.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" /> Delete User
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}

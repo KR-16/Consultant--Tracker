@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Upload, FileText, User, Mail, Trash2, 
-  MapPin, CheckCircle, AlertCircle, Download, Loader2 
+  Upload, FileText, Mail, Trash2, 
+  MapPin, CheckCircle, AlertCircle, Download, Loader2, 
+  Phone, Save, X, PenSquare 
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/ui/use-toast';
 
@@ -12,38 +15,84 @@ const CandidateProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // State for resumes (Mock data usually fetched from API)
+  // --- 1. Profile Edit State ---
+  const [isEditing, setIsEditing] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
+  
+  // Form Data
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    location: "Remote / United States",
+    phone: "+1 (555) 012-3456",
+    role: ""
+  });
+
+  // Snapshot to store original data for "Cancel"
+  const [originalData, setOriginalData] = useState(null);
+
+  // Load user data into form when component mounts
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+        role: user.role || "Candidate"
+      }));
+    }
+  }, [user]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // ✅ START EDIT: Save a snapshot of current data
+  const handleStartEdit = () => {
+    setOriginalData({ ...formData });
+    setIsEditing(true);
+  };
+
+  // ✅ CANCEL EDIT: Revert to the snapshot
+  const handleCancelEdit = () => {
+    setFormData(originalData); // Reverts all fields (Phone, Location, Name)
+    setIsEditing(false);
+  };
+
+  const handleSaveProfile = () => {
+    setLoadingSave(true);
+    // Simulate API Call
+    setTimeout(() => {
+      setLoadingSave(false);
+      setIsEditing(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your personal details have been saved.",
+        className: "bg-green-50 border-green-200"
+      });
+    }, 1000);
+  };
+
+  // --- 2. Resume Logic (Existing) ---
   const [resumes, setResumes] = useState([
     { id: 1, name: "John_Dev_Resume.pdf", size: "1.2 MB", date: "2024-01-15" }
   ]);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Handle File Upload
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validation 1: Max 2 resumes
     if (resumes.length >= 2) {
-      toast({
-        variant: "destructive",
-        title: "Limit Reached",
-        description: "You can only store a maximum of 2 resumes.",
-      });
+      toast({ variant: "destructive", title: "Limit Reached", description: "Max 2 resumes allowed." });
       return;
     }
-
-    // Validation 2: File Type
     if (file.type !== "application/pdf") {
-      toast({
-        variant: "destructive",
-        title: "Invalid File",
-        description: "Only PDF files are allowed.",
-      });
+      toast({ variant: "destructive", title: "Invalid File", description: "Only PDF files allowed." });
       return;
     }
 
-    // Simulate Upload API Call
     setIsUploading(true);
     setTimeout(() => {
       const newResume = {
@@ -52,30 +101,21 @@ const CandidateProfile = () => {
         size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
         date: new Date().toISOString().split('T')[0]
       };
-      
       setResumes([...resumes, newResume]);
       setIsUploading(false);
-      toast({
-        title: "Success",
-        description: "Resume uploaded successfully.",
-        className: "bg-green-50 border-green-200"
-      });
+      toast({ title: "Success", description: "Resume uploaded successfully.", className: "bg-green-50 border-green-200" });
     }, 1500);
   };
 
-  // Handle Delete
   const handleDelete = (id) => {
     setResumes(resumes.filter(r => r.id !== id));
-    toast({
-      title: "Deleted",
-      description: "Resume removed from your profile.",
-    });
+    toast({ title: "Deleted", description: "Resume removed." });
   };
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       
-      {/* Header */}
+      {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">My Profile</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your personal information and documents.</p>
@@ -83,52 +123,148 @@ const CandidateProfile = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* --- LEFT COLUMN: Personal Info --- */}
+        {/* --- LEFT COLUMN: Personal Info (Editable) --- */}
         <Card className="h-fit border-slate-200 dark:border-slate-800 dark:bg-slate-900">
-          <CardContent className="p-8 flex flex-col items-center text-center">
+          <CardContent className="p-8">
             
-            {/* Avatar / Initials */}
-            <div className="w-28 h-28 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-4xl font-bold text-slate-600 dark:text-slate-300 mb-6 border-4 border-white dark:border-slate-700 shadow-sm">
-              {user?.name?.charAt(0).toUpperCase() || "U"}
-            </div>
-            
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{user?.name || "Candidate Name"}</h2>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold">
-              <CheckCircle className="w-3 h-3" /> Verified Candidate
-            </div>
-
-            <div className="w-full mt-8 space-y-4 text-left border-t border-slate-100 dark:border-slate-800 pt-6">
-              <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <span className="text-sm">{user?.email || "email@example.com"}</span>
+            {/* Avatar Section */}
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-28 h-28 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-4xl font-bold text-slate-600 dark:text-slate-300 mb-4 border-4 border-white dark:border-slate-700 shadow-sm relative group">
+                {formData.name.charAt(0).toUpperCase() || "U"}
               </div>
               
-              <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <MapPin className="w-4 h-4" />
+              {!isEditing && (
+                <>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{formData.name}</h2>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-2 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold">
+                    <CheckCircle className="w-3 h-3" /> Verified Candidate
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Editable Fields */}
+            <div className="space-y-4">
+              
+              {/* Name Field */}
+              {isEditing && (
+                <div className="space-y-2 text-left">
+                  <Label>Full Name</Label>
+                  <Input 
+                    name="name" 
+                    value={formData.name} 
+                    onChange={handleInputChange} 
+                    className="bg-white dark:bg-slate-950"
+                  />
                 </div>
-                <span className="text-sm">Remote / United States</span>
+              )}
+
+              {/* Email Field (Read-only) */}
+              <div className={isEditing ? "space-y-2 text-left" : "flex items-center gap-3 text-slate-600 dark:text-slate-400"}>
+                {isEditing ? (
+                  <>
+                    <Label>Email Address</Label>
+                    <Input 
+                      name="email" 
+                      value={formData.email} 
+                      disabled 
+                      className="bg-slate-100 dark:bg-slate-800 cursor-not-allowed opacity-70"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg shrink-0">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm truncate">{formData.email}</span>
+                  </>
+                )}
+              </div>
+              
+              {/* Location Field */}
+              <div className={isEditing ? "space-y-2 text-left" : "flex items-center gap-3 text-slate-600 dark:text-slate-400"}>
+                {isEditing ? (
+                  <>
+                    <Label>Location</Label>
+                    <Input 
+                      name="location" 
+                      value={formData.location} 
+                      onChange={handleInputChange}
+                      className="bg-white dark:bg-slate-950"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg shrink-0">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm">{formData.location}</span>
+                  </>
+                )}
               </div>
 
-              <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                  <User className="w-4 h-4" />
-                </div>
-                <span className="text-sm capitalize">{user?.role?.toLowerCase() || "Candidate"}</span>
+              {/* Phone Field */}
+              <div className={isEditing ? "space-y-2 text-left" : "flex items-center gap-3 text-slate-600 dark:text-slate-400"}>
+                {isEditing ? (
+                  <>
+                    <Label>Phone Number</Label>
+                    <Input 
+                      name="phone" 
+                      value={formData.phone} 
+                      onChange={handleInputChange}
+                      className="bg-white dark:bg-slate-950"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg shrink-0">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm">{formData.phone}</span>
+                  </>
+                )}
               </div>
             </div>
 
-            <Button variant="outline" className="w-full mt-8 border-slate-200 dark:border-slate-700">
-              Edit Profile Details
-            </Button>
+            {/* Action Buttons */}
+            <div className="mt-8 space-y-3">
+              {isEditing ? (
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleSaveProfile} 
+                    disabled={loadingSave}
+                    className="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                  >
+                    {loadingSave ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                    Save
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancelEdit} // ✅ This now reverts correctly
+                    disabled={loadingSave}
+                    className="flex-1"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={handleStartEdit} // ✅ Starts edit & takes snapshot
+                  className="w-full border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  <PenSquare className="w-4 h-4 mr-2" />
+                  Edit Profile Details
+                </Button>
+              )}
+            </div>
+
           </CardContent>
         </Card>
 
-        {/* --- RIGHT COLUMN: Resume Manager --- */}
+        {/* --- RIGHT COLUMN: Resume Manager (Unchanged) --- */}
         <div className="lg:col-span-2 space-y-6">
-          
           <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900">
             <CardHeader>
               <div className="flex justify-between items-center">
@@ -147,7 +283,7 @@ const CandidateProfile = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               
-              {/* Upload Area - Only show if limit not reached */}
+              {/* Upload Area */}
               {resumes.length < 2 ? (
                 <div className="relative group">
                   <input 
@@ -185,9 +321,7 @@ const CandidateProfile = () => {
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider">Your Documents</h4>
                 
-                {resumes.length === 0 && (
-                   <p className="text-slate-400 italic text-sm">No resumes uploaded yet.</p>
-                )}
+                {resumes.length === 0 && <p className="text-slate-400 italic text-sm">No resumes uploaded yet.</p>}
 
                 {resumes.map((resume) => (
                   <div key={resume.id} className="group flex items-center justify-between p-4 bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 transition-all shadow-sm">
@@ -221,7 +355,6 @@ const CandidateProfile = () => {
                   </div>
                 ))}
               </div>
-
             </CardContent>
           </Card>
         </div>

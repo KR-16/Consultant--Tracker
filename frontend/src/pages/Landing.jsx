@@ -3,18 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { 
-  Users, FileText, BarChart, Shield, CheckCircle, 
-  ArrowRight, LayoutDashboard, Star, Zap, Globe 
+  Users, BarChart, Shield, CheckCircle, 
+  ArrowRight, Star, Zap 
 } from 'lucide-react';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Redirect logged-in users immediately to dashboard
+  // ✅ LOGIC UPDATE: Redirect based on Role
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      if (user.role === 'CANDIDATE') {
+        navigate('/candidate/jobs'); // Candidates go to Job Board
+      } else {
+        navigate('/dashboard'); // Admins & Managers go to Dashboard
+      }
     }
   }, [user, navigate]);
 
@@ -96,7 +100,6 @@ const Landing = () => {
         <div className="mt-16 pt-8 border-t border-slate-100 dark:border-slate-800">
           <p className="text-sm text-slate-400 font-medium mb-4">TRUSTED BY RECRUITING TEAMS AT</p>
           <div className="flex justify-center gap-8 opacity-50 grayscale">
-            {/* Simple text placeholders for logos to keep code clean */}
             <span className="font-bold text-xl">ACME Corp</span>
             <span className="font-bold text-xl">GlobalTech</span>
             <span className="font-bold text-xl">Nebula</span>
