@@ -47,7 +47,6 @@ const Navbar = () => {
             <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
               {isCandidate && (
                 <>
-                  {/* ✅ Correct Link to Profile */}
                   <DropdownMenuItem 
                     onClick={() => navigate('/candidate/profile')}
                     className="cursor-pointer dark:text-slate-200 dark:focus:bg-slate-800"

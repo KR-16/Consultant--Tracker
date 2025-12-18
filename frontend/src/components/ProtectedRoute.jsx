@@ -8,10 +8,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-
-  // If roles are specified, check them
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    // Redirect unauthorized users to their dashboard
     return <Navigate to="/dashboard" replace />;
   }
 

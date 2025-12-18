@@ -6,7 +6,6 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     
     # Database
-   # Default to localhost for local development
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://recruit_user:recruit_password@localhost:5432/recruitops_db")
     
     # Security

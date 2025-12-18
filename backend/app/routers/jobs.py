@@ -22,7 +22,7 @@ def read_jobs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), cu
 def create_job(
     job_in: JobCreate, 
     db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_manager) # Only Managers
+    current_user: User = Depends(get_current_manager) 
 ):
     """
     Create a new job posting.

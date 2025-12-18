@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { registerUser } from '../../api/auth'; // ✅ Correct Import
+import { registerUser } from '../../api/auth';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -38,39 +38,35 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // ✅ Use the new API function
       await registerUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
         role: role
       });
-      
-      // Redirect on success
+    
       navigate('/login');
       
     } catch (err) {
       console.error("Registration Error:", err);
       
-      // --- ROBUST ERROR HANDLING ---
-      // Check if backend sent a specific detail message
+
       if (err.response?.data?.detail) {
         const detail = err.response.data.detail;
-        
-        // Case A: Detail is an array (Pydantic validation error)
+  
         if (Array.isArray(detail)) {
           setError(detail[0].msg || "Invalid input data");
         } 
-        // Case B: Detail is a simple string (HTTPException)
+
         else if (typeof detail === 'string') {
           setError(detail);
         }
-        // Case C: Fallback
+
         else {
           setError("Registration failed. Please check your inputs.");
         }
       } else {
-        // Fallback for network errors
+
         setError("Registration failed. Server might be down or unreachable.");
       }
     } finally {

@@ -27,8 +27,7 @@ const CandidateJobDetails = () => {
         const data = await getJob(id);
         setJob(data);
         
-        // Optional: Check if user already applied to disable button
-        // (You would typically check this against a list of 'my-applications')
+      
       } catch (error) {
         console.error("Error fetching job:", error);
         toast({
@@ -59,7 +58,6 @@ const CandidateJobDetails = () => {
       
     } catch (error) {
       console.error("Application error:", error);
-      // specific error for missing resume based on your backend logic
       const errorMessage = error.response?.status === 400 
         ? "Please upload your resume in the Profile section first." 
         : "Failed to submit application. Please try again.";
@@ -173,7 +171,6 @@ const CandidateJobDetails = () => {
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Requirements</h3>
             <ul className="space-y-3">
-              {/* If requirements are a list in DB, map them. If string, just display. */}
               {Array.isArray(job.requirements) ? (
                 job.requirements.map((req, i) => (
                   <li key={i} className="flex items-start gap-3 text-slate-600 dark:text-slate-300">

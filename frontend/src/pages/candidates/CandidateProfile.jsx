@@ -19,7 +19,6 @@ const CandidateProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
   
-  // Form Data
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,10 +27,10 @@ const CandidateProfile = () => {
     role: ""
   });
 
-  // Snapshot to store original data for "Cancel"
+  
   const [originalData, setOriginalData] = useState(null);
 
-  // Load user data into form when component mounts
+ 
   useEffect(() => {
     if (user) {
       setFormData(prev => ({
@@ -48,15 +47,14 @@ const CandidateProfile = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // ✅ START EDIT: Save a snapshot of current data
   const handleStartEdit = () => {
     setOriginalData({ ...formData });
     setIsEditing(true);
   };
 
-  // ✅ CANCEL EDIT: Revert to the snapshot
+
   const handleCancelEdit = () => {
-    setFormData(originalData); // Reverts all fields (Phone, Location, Name)
+    setFormData(originalData); 
     setIsEditing(false);
   };
 
@@ -240,7 +238,7 @@ const CandidateProfile = () => {
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={handleCancelEdit} // ✅ This now reverts correctly
+                    onClick={handleCancelEdit} 
                     disabled={loadingSave}
                     className="flex-1"
                   >
@@ -251,7 +249,7 @@ const CandidateProfile = () => {
               ) : (
                 <Button 
                   variant="outline" 
-                  onClick={handleStartEdit} // ✅ Starts edit & takes snapshot
+                  onClick={handleStartEdit} 
                   className="w-full border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   <PenSquare className="w-4 h-4 mr-2" />
@@ -263,7 +261,7 @@ const CandidateProfile = () => {
           </CardContent>
         </Card>
 
-        {/* --- RIGHT COLUMN: Resume Manager (Unchanged) --- */}
+        {/* --- RIGHT COLUMN: Resume Manager--- */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-slate-200 dark:border-slate-800 dark:bg-slate-900">
             <CardHeader>

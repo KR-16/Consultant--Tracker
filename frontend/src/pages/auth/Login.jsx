@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Users, Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { jwtDecode } from "jwt-decode"; // ✅ Import this to read role
+import { jwtDecode } from "jwt-decode"; 
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -37,7 +37,7 @@ const Login = () => {
 
       // 4. Navigate based on role
       if (decoded.role === 'CANDIDATE') {
-        navigate('/candidate/jobs'); // Or /candidate/tracker
+        navigate('/candidate/jobs'); 
       } else if (decoded.role === 'TALENT_MANAGER' || decoded.role === 'ADMIN') {
         navigate('/dashboard');
       } else {
@@ -46,7 +46,6 @@ const Login = () => {
 
     } catch (err) {
       console.error("Login Flow Error:", err);
-      // Show specific error if available, else generic
       setError(err.response?.data?.detail || 'Invalid email or password');
     } finally {
       setLoading(false);

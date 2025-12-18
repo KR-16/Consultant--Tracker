@@ -1,7 +1,7 @@
 import * as React from "react"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 1000 
 
 let count = 0
 
@@ -35,6 +35,7 @@ export const reducer = (state, action) => {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
       }
+
     case "UPDATE_TOAST":
       return {
         ...state,
@@ -42,11 +43,10 @@ export const reducer = (state, action) => {
           t.id === action.toast.id ? { ...t, ...action.toast } : t
         ),
       }
+
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -67,6 +67,7 @@ export const reducer = (state, action) => {
         ),
       }
     }
+
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
         return {
@@ -78,6 +79,9 @@ export const reducer = (state, action) => {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
       }
+
+    default:
+      return state
   }
 }
 

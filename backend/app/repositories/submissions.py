@@ -5,7 +5,6 @@ from app.schemas.submissions import SubmissionCreate
 
 class SubmissionRepository:
     def create(self, db: Session, sub_in: SubmissionCreate, candidate_id: int):
-        # Check if already applied
         existing = db.query(Submission).filter(
             Submission.job_id == sub_in.job_id,
             Submission.candidate_id == candidate_id

@@ -19,8 +19,8 @@ class Submission(Base):
     candidate_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     status = Column(SQLEnum(SubmissionStatus), default=SubmissionStatus.APPLIED)
-    resume_used = Column(String, nullable=True) # URL of the specific resume used
-    ats_score = Column(Float, nullable=True)    # The AI Score
+    resume_used = Column(String, nullable=True) 
+    ats_score = Column(Float, nullable=True)    
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

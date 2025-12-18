@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Search, Filter, Star, MoreHorizontal } from 'lucide-react';
+import { Search, Filter, Star} from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 
-// --- Mock Data for Availability Page ---
+
 const MOCK_CONSULTANTS = [
   {
     id: 1,
@@ -63,7 +63,7 @@ const MOCK_CONSULTANTS = [
   }
 ];
 
-// --- Toggle Switch Component ---
+
 const ToggleSwitch = ({ checked, onChange }) => (
   <div 
     onClick={onChange}
@@ -79,7 +79,6 @@ const ToggleSwitch = ({ checked, onChange }) => (
   </div>
 );
 
-// --- Star Rating Component ---
 const StarRating = ({ rating }) => (
   <div className="flex gap-0.5">
     {[...Array(5)].map((_, i) => (

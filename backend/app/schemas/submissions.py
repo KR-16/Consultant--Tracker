@@ -22,7 +22,6 @@ class SubmissionResponse(BaseModel):
     ats_score: Optional[float] = None
     created_at: datetime
     
-    # Nested objects for convenience (optional)
     job: Optional[JobResponse] = None
     candidate: Optional[UserResponse] = None
 

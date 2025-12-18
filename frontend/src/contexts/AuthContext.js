@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { jwtDecode } from "jwt-decode"; // ✅ Correct named import
+import { jwtDecode } from "jwt-decode"; 
 
 const AuthContext = createContext(null);
 
@@ -8,12 +8,10 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for token on app startup
     const token = localStorage.getItem('access_token');
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        // Check if token is expired
         const currentTime = Date.now() / 1000;
         if (decoded.exp < currentTime) {
             console.warn("Token expired, logging out");

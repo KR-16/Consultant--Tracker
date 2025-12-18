@@ -32,7 +32,6 @@ const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) 
 ))
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
-// ✅ ADDED THIS: Label Component
 const DropdownMenuLabel = React.forwardRef(({ className, inset, ...props }, ref) => (
   <div
     ref={ref}
@@ -42,7 +41,6 @@ const DropdownMenuLabel = React.forwardRef(({ className, inset, ...props }, ref)
 ))
 DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName
 
-// ✅ ADDED THIS: Separator Component
 const DropdownMenuSeparator = React.forwardRef(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}

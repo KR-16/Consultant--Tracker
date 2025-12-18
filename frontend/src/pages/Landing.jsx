@@ -4,25 +4,24 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { 
   Users, BarChart, Shield, CheckCircle, 
-  ArrowRight, Star, Zap 
+  ArrowRight, Zap 
 } from 'lucide-react';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // ✅ LOGIC UPDATE: Redirect based on Role
   useEffect(() => {
     if (user) {
       if (user.role === 'CANDIDATE') {
-        navigate('/candidate/jobs'); // Candidates go to Job Board
+        navigate('/candidate/jobs'); 
       } else {
-        navigate('/dashboard'); // Admins & Managers go to Dashboard
+        navigate('/dashboard'); 
       }
     }
   }, [user, navigate]);
 
-  // Smooth scroll handler
+ 
   const scrollToPricing = () => {
     const pricingSection = document.getElementById('pricing');
     if (pricingSection) {
@@ -64,10 +63,6 @@ const Landing = () => {
 
       {/* ==================== HERO SECTION ==================== */}
       <section className="pt-32 pb-20 px-4 text-center max-w-5xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wide mb-6">
-          <Star className="h-3 w-3" /> v2.0 is now live
-        </div>
-        
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-6 leading-tight">
           The Operating System for <br/>
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Modern Hiring</span>
@@ -96,16 +91,6 @@ const Landing = () => {
             </Button>
         </div>
 
-        {/* Social Proof */}
-        <div className="mt-16 pt-8 border-t border-slate-100 dark:border-slate-800">
-          <p className="text-sm text-slate-400 font-medium mb-4">TRUSTED BY RECRUITING TEAMS AT</p>
-          <div className="flex justify-center gap-8 opacity-50 grayscale">
-            <span className="font-bold text-xl">ACME Corp</span>
-            <span className="font-bold text-xl">GlobalTech</span>
-            <span className="font-bold text-xl">Nebula</span>
-            <span className="font-bold text-xl">FoxRun</span>
-          </div>
-        </div>
       </section>
 
       {/* ==================== FEATURES GRID ==================== */}

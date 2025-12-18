@@ -23,7 +23,6 @@ class UserRepository:
         db.commit()
         db.refresh(db_user)
         
-        # If user is a candidate, create an empty profile automatically
         if user_in.role == UserRole.CANDIDATE:
             profile = CandidateProfile(user_id=db_user.id)
             db.add(profile)
@@ -37,7 +36,6 @@ class UserRepository:
             profile = CandidateProfile(user_id=user_id)
             db.add(profile)
         
-        # Update fields only if they are provided
         update_data = profile_in.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(profile, field, value)

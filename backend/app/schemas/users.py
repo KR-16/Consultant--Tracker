@@ -28,7 +28,7 @@ class CandidateProfileBase(BaseModel):
     phone: Optional[str] = None
     location: Optional[str] = None
     experience_years: int = 0
-    skills: Optional[str] = None # Comma-separated
+    skills: Optional[str] = None 
     resume_1_url: Optional[str] = None
     resume_2_url: Optional[str] = None
 

@@ -6,7 +6,7 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "./toast" // Note: You need a toast.jsx file for this, see note below
+} from "./toast" 
 
 export function Toaster() {
   const { toasts } = useToast()

@@ -18,7 +18,6 @@ def get_all_users(
     current_user: User = Depends(get_current_admin)
 ):
     """Admin: Get all users"""
-    # Simple query implementation (or use repo.get_all if you added it there)
     return db.query(User).offset(skip).limit(limit).all()
 
 @router.post("/", response_model=UserResponse)

@@ -166,7 +166,7 @@ const TalentManagerDashboard = ({ user }) => {
                         <p className="text-xs text-slate-500">Applicants</p>
                       </div>
                       
-                      {/* ✅ Action: View Submissions for this specific Job */}
+    
                       <Button 
                         size="sm" 
                         variant="outline" 

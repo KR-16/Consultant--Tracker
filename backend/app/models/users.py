@@ -36,9 +36,7 @@ class CandidateProfile(Base):
     phone = Column(String, nullable=True)
     location = Column(String, nullable=True)
     experience_years = Column(Integer, default=0)
-    skills = Column(String, nullable=True) # Stored as comma-separated string for simplicity
-    
-    # Resume URLs (Storing up to 2 as requested)
+    skills = Column(String, nullable=True) 
     resume_1_url = Column(String, nullable=True)
     resume_2_url = Column(String, nullable=True)
 

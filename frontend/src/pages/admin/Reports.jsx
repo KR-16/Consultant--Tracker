@@ -10,9 +10,8 @@ import { useAuth } from '../../contexts/AuthContext';
 const Reports = () => {
   const { user } = useAuth();
 
-  // Helper to simulate CSV Download
+  
   const downloadReport = (reportType) => {
-    // 1. Mock Data based on report type
     let data = [];
     let filename = '';
 
@@ -32,11 +31,9 @@ const Reports = () => {
       ];
     }
 
-    // 2. Convert to CSV string
     const csvContent = "data:text/csv;charset=utf-8," 
       + data.map(e => e.join(",")).join("\n");
 
-    // 3. Create invisible download link and click it
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
