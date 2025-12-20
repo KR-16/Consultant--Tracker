@@ -105,7 +105,7 @@ Consultant-Tracker
 
 4. **Configure environment variables:(Create a .env file inside the backend/ directory)**
    ```
-   DATABASE_URL=postgresql://user:password@localhost:5432/recruitops_db
+   DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<database_name>
    SECRET_KEY=your_secret_key
    ACCESS_TOKEN_EXPIRE_MINUTES=30
    ```
