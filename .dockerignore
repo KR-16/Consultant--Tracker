@@ -1,0 +1,22 @@
+# .dockerignore
+
+# Git
+.git
+.gitignore
+
+# Python
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Node
+node_modules
+npm-debug.log
+build
+dist
+
+# Docker
+docker-compose.yml
+Dockerfile

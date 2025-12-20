@@ -1,9 +1,0 @@
-id,consultant_id,client_or_job,recruiter,submitted_on,status,comments,attachment_path
-1,1,TechCorp - Senior React Developer,Alice Brown,2024-01-15T10:00:00,INTERVIEW,Initial screening completed technical interview scheduled,
-2,1,StartupXYZ - Full Stack Developer,Bob Green,2024-01-20T14:30:00,SUBMITTED,Recently submitted waiting for client response,
-3,2,DataFlow Inc - Python Developer,Alice Brown,2024-01-10T09:15:00,OFFER,Client is preparing offer letter,
-4,2,CloudTech - DevOps Engineer,Carol White,2024-01-05T16:45:00,JOINED,Successfully placed and started work,
-5,3,Enterprise Solutions - Java Architect,David Black,2023-12-20T11:20:00,JOINED,Currently working on this assignment,
-6,4,WebDev Co - Frontend Developer,Alice Brown,2024-01-18T13:00:00,REJECTED,Client decided to go with internal candidate,
-7,5,FinanceApp - .NET Developer,Bob Green,2024-01-13T15:30:00,INTERVIEW,Technical interview completed waiting for feedback,
-8,5,Healthcare Corp - Senior Developer,Carol White,2023-12-30T12:00:00,ON_HOLD,Project temporarily on hold due to budget constraints,

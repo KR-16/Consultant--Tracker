@@ -1,576 +1,215 @@
-# Consultant Tracker
+# Talentra
 
-A comprehensive **modular FastAPI application** for managing consultants, recruiters, job postings, and job submissions. Built with a clean, scalable architecture that supports role-based access control and dynamic module registration.
+A role-based Applicant Tracking System (ATS) designed to streamline job applications, candidate management, and recruitment workflows. The platform enables candidates to apply and track job applications, recruiters to manage assigned candidates and update hiring stages, and administrators to oversee the entire system. Enhanced with AI-powered resume building, role-based access control, real-time application tracking, and downloadable reports, the system provides a structured and scalable solution for modern recruitment processes.
 
-## 🚀 Features
+## 🌟 Features & Roles
 
-### Core Features
-- ✅ **User Authentication** - JWT-based authentication with role-based access control
-- ✅ **Modular Architecture** - Self-contained modules for easy maintenance and extension
-- ✅ **Role-Based Access Control** - Admin, Recruiter, and Consultant roles
-- ✅ **Consultant Management** - Profile management, resume upload/download
-- ✅ **Recruiter Management** - Recruiter profile management
-- ✅ **Job Management** - Create, update, and manage job postings
-- ✅ **Submission Management** - Track job applications and submissions
-- ✅ **Comprehensive Logging** - Structured logging with file rotation
-- ✅ **RESTful API** - Clean API design with OpenAPI documentation
+### 1. Candidate (Job Seeker)
+* **Job Discovery & Application:** View full job details and apply by selecting an existing resume or uploading a new one.
+* **Application Tracking:** Read-only view of application status through stages: *Applied → Online Assessment → Interview → Offer → Rejected*.
+* **Profile Management:** Manage personal details (Visa Status, City, Skills) and Experience Level (Fresher, 1–3 yrs, 3–5 yrs, 5+ yrs).
+* **Resume Management:** Upload and manage a maximum of **2 resumes**. Download or replace them as needed.
+* **AI Resume Builder:** A dedicated sidebar tool to generate, improve, and export resumes using AI.
+* **Candidate Dashboard:** Quick access to My Jobs, Application Tracker, Profile, and Resume Manager.
 
-### User Roles
+### 2. Recruiter (Hiring Manager)
+* **Candidate Assignment:** **(Exclusive)** Recruiters can only access and manage candidates explicitly assigned to them by the Admin.
+* **Job Posting & Management:** Create, edit, and close job postings with AI-suggested skills, experience levels, and locations.
+* **Application Tracker Management:** Update candidate stages (Assessment, Interview, etc.) and add remarks/notes.
+* **Submissions Management:** Review profiles and resumes of candidates who applied to posted jobs.
+* **Reports & Export:** Download CSV reports containing Company Name, Job Title, Candidate Name, Status, and Recruiter Name.
+* **Recruiter Dashboard:** Overview of assigned candidates, status counts, and recent activity.
 
-1. **ADMIN** - Full system access, user management
-2. **RECRUITER** - Manage jobs, view consultants, manage submissions
-3. **CONSULTANT** - View jobs, create profile, submit applications
+### 3. Admin (System Admin)
+* **Candidate-Recruiter Assignment:** The core authority to assign specific candidates to recruiters and reassign them if needed.
+* **User Management:** Create, update, and deactivate users. Manage RBAC roles (Admin / Recruiter / Candidate).
+* **System Oversight:** Full access to all jobs, trackers, and submissions with override rights.
+* **Global Dashboard:** High-level metrics: Total Candidates, Total Recruiters, Active Jobs, and Application Status breakdown.
+* **Reports & Analytics:** Access full system data and export global performance metrics.
 
 ---
 
 ## 🛠 Tech Stack
 
 ### Backend
-- **FastAPI** - Modern Python web framework
-- **MongoDB** - NoSQL database
-- **Motor** - Async MongoDB driver
-- **Pydantic** - Data validation and settings
-- **JWT** - Token-based authentication (python-jose)
-- **Bcrypt** - Password hashing (passlib)
-- **Python 3.8+** - Programming language
+- **FastAPI** - High-performance Python web framework
+- **PostgreSQL** - Open-source relational database
+- **SQLAlchemy** - Python SQL Toolkit and ORM
+- **Alembic** - Database migration tool
+- **JWT** - Secure authentication and session management
+- **Bcrypt** - Password hashing
+- **Python 3.8+** - Core logic
 
 ### Frontend
 - **React 18** - UI library
-- **Material-UI (MUI)** - Component library
-- **React Router** - Client-side routing
+- **Tailwind CSS** - Utility-first styling
+- **TanStack Query** - State management and caching
+- **React Router v6** - Client-side routing
+- **Lucide React** - Modern iconography
 - **Axios** - HTTP client
-- **Tailwind CSS** - Utility-first CSS framework
-- **Chart.js / Recharts** - Data visualization
 
 ---
 
 ## 📁 Project Structure
 
-```
-Consultant--Tracker
-├── CODEBASE_STRUCTURE.md
+```text
+Consultant-Tracker
 ├── README.md
-├── TEST_CASES.md
+├── RecruitOps.session.sql
 ├── backend
 │   ├── app
-│   │   ├── core
-│   │   │   ├── __init__.py
-│   │   │   ├── auth.py
-│   │   │   ├── config.py
-│   │   │   ├── db.py
-│   │   │   ├── logging_config.py
-│   │   │   ├── models.py
-│   │   │   ├── schema_registry.py
-│   │   │   └── schemas.py
-│   │   ├── main.py
-│   │   └── modules
-│   │       ├── __init__.py
-│   │       ├── auth
-│   │       │   ├── __init__.py
-│   │       │   ├── models.py
-│   │       │   ├── module.py
-│   │       │   ├── repository.py
-│   │       │   ├── router.py
-│   │       │   ├── schema.py
-│   │       │   ├── user_repositories
-│   │       │   │   ├── __init__.py
-│   │       │   │   ├── admins.py
-│   │       │   │   ├── consultants_user.py
-│   │       │   │   └── recruiters.py
-│   │       │   └── user_schemas
-│   │       │       ├── __init__.py
-│   │       │       ├── admins.py
-│   │       │       ├── consultants_user.py
-│   │       │       └── recruiters.py
-│   │       ├── consultants
-│   │       │   ├── __init__.py
-│   │       │   ├── models.py
-│   │       │   ├── module.py
-│   │       │   ├── repository.py
-│   │       │   ├── router.py
-│   │       │   └── schema.py
-│   │       ├── jobs
-│   │       │   ├── __init__.py
-│   │       │   ├── models.py
-│   │       │   ├── module.py
-│   │       │   ├── repository.py
-│   │       │   ├── router.py
-│   │       │   └── schema.py
-│   │       ├── recruiters
-│   │       │   ├── __init__.py
-│   │       │   ├── models.py
-│   │       │   ├── module.py
-│   │       │   ├── repository.py
-│   │       │   ├── router.py
-│   │       │   └── schema.py
-│   │       └── submissions
-│   │           ├── __init__.py
-│   │           ├── models.py
-│   │           ├── module.py
-│   │           ├── repository.py
-│   │           ├── router.py
-│   │           └── schema.py
-│   ├── migrate_users_to_separate_collections.py
-│   ├── tests
-│   │   ├── test_consultants.py
-│   │   └── test_submissions.py
-│   └── uploads
-│       
+│   │   ├── core          # Config, Security
+│   │   ├── db            # Database sessions
+│   │   ├── models        # DB Tables (Jobs, Users, Submissions, Assignments)
+│   │   ├── routers       # API Endpoints (Auth, Candidates, Recruiters, Reports)
+│   │   ├── schemas       # Pydantic Models
+│   │   └── services      # Business Logic (ATS, AI Resume Builder)
+│   ├── main.py
+│   └── requirements.txt
 ├── frontend
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── postcss.config.js
-│   ├── public
-│   │   ├── index.html
-│   │   ├── manifest.json
-│   │   └── robots.txt
 │   ├── src
-│   │   ├── App.js
-│   │   ├── api.js
-│   │   ├── components
-│   │   │   ├── auth
-│   │   │   │   ├── Login.js
-│   │   │   │   ├── ProtectedRoute.js
-│   │   │   │   └── Register.js
-│   │   │   ├── consultant
-│   │   │   │   ├── ConsultantApplications.js
-│   │   │   │   ├── ConsultantDashboard.js
-│   │   │   │   ├── ConsultantJobs.js
-│   │   │   │   └── ConsultantProfile.js
-│   │   │   ├── recruiter
-│   │   │   │   ├── ConsultantList.js
-│   │   │   │   ├── JobManager.js
-│   │   │   │   ├── RecruiterDashboard.js
-│   │   │   │   ├── RecruiterProfile.js
-│   │   │   │   └── SubmissionBoard.js
-│   │   │   └── ui
-│   │   │       ├── badge.jsx
-│   │   │       ├── button.jsx
-│   │   │       ├── card.jsx
-│   │   │       ├── dialog.jsx
-│   │   │       ├── dropdown-menu.jsx
-│   │   │       ├── input.jsx
-│   │   │       └── label.jsx
-│   │   ├── config.js
-│   │   ├── contexts
-│   │   │   └── AuthContext.js
-│   │   ├── index.css
-│   │   ├── index.js
-│   │   └── utils
-│   │       └── cn.js
-│   └── tailwind.config.js
-├── mongo-init
-│   └── init-db.js
-├── pyproject.toml
-├── requirements.txt
-├── sample_data
-│   ├── consultants.csv
-│   └── submissions.csv
-└── uv.lock
+│   │   ├── api           # API connections
+│   │   ├── components    # UI Components
+│   │   ├── contexts      # Auth Context
+│   │   ├── pages         # Role-specific pages (Admin, Recruiter, Candidate)
+│   │   └── App.js
+└── docker-compose.yml
 ```
-
----
-
-## 🏗 Architecture
-
-The application follows a **modular architecture** pattern:
-
-- **Core Layer**: Shared infrastructure (config, database, auth, logging)
-- **Modules Layer**: Self-contained business modules
-- **Dynamic Registration**: Modules are automatically discovered and registered
-
-Each module contains:
-- `router.py` - API endpoints
-- `repository.py` - Business logic & data access
-- `models.py` - Pydantic models
-- `schema.py` - MongoDB collection schema
-- `module.py` - Module class implementing BaseModule
-
-For detailed architecture documentation, see [CODEBASE_STRUCTURE.md](./CODEBASE_STRUCTURE.md).
-
----
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - **Python 3.8+**
-- **Node.js 16+** and npm
-- **MongoDB 4.4+** (running locally or accessible)
+- **Node.js 16+** 
+- **PostgreSQL(Local installation OR Docker Desktop)**
+
 
 ### Backend Setup
 
 1. **Navigate to backend directory:**
-   ```bash
+   ```
    cd backend
    ```
 
 2. **Create and activate virtual environment:**
-   ```bash
-   # Windows
+   ```
    python -m venv .venv
-   .venv\Scripts\activate
-
-   # Linux/Mac
-   python3 -m venv .venv
-   source .venv/bin/activate
+   # Windows: .venv\Scripts\activate
+   # Mac/Linux: source .venv/bin/activate
    ```
 
 3. **Install dependencies:**
-   ```bash
+   ```
    pip install -r requirements.txt
    ```
 
-   Or using `uv` (recommended):
-   ```bash
-   uv pip install -r requirements.txt
+4. **Configure environment variables:(Create a .env file inside the backend/ directory)**
+   ```
+   DATABASE_URL=postgresql://user:password@localhost:5432/recruitops_db
+   SECRET_KEY=your_secret_key
+   ACCESS_TOKEN_EXPIRE_MINUTES=30
    ```
 
-4. **Configure environment variables** (optional):
-   ```bash
-   # Create .env file or set environment variables
-   export MONGODB_URL="mongodb://localhost:27017"
-   export DATABASE_NAME="consultant_tracker"
-   export SECRET_KEY="your-secret-key-here"
-   export ACCESS_TOKEN_EXPIRE_MINUTES=30
-   export CORS_ORIGINS="http://localhost:3000,http://localhost:3001"
+5. **Run Database Migrations**
    ```
-
-5. **Start MongoDB:**
-   - Make sure MongoDB is running on `localhost:27017`
-   - Or update `MONGODB_URL` to point to your MongoDB instance
+   alembic upgrade head
+   ```
 
 6. **Run the backend:**
-   ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+   uvicorn app.main:app --reload 
    ```
 
-   The API will be available at:
-   - API: `http://localhost:8000/api`
-   - Docs: `http://localhost:8000/docs` (Swagger UI)
-   - ReDoc: `http://localhost:8000/redoc`
 
 ### Frontend Setup
 
 1. **Navigate to frontend directory:**
-   ```bash
+   ```
    cd frontend
    ```
 
 2. **Install dependencies:**
-   ```bash
+   ```
    npm install
    ```
 
-3. **Configure API URL** (if needed):
-   - Default: `http://localhost:8000/api`
-   - Update in `src/config.js` or set `REACT_APP_API_URL` environment variable
-
-4. **Start the frontend:**
-   ```bash
+3. **Start the frontend:**
+   ```
    npm start
    ```
 
-   The frontend will run on `http://localhost:3000` (or next available port).
-
 ---
-
-## 📡 API Endpoints
 
 ### Authentication (`/api/auth`)
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/auth/register` | Register a new user | No |
-| POST | `/api/auth/login` | Login user | No |
-| GET | `/api/auth/me` | Get current user info | Yes |
-| POST | `/api/auth/refresh` | Refresh access token | Yes |
-| POST | `/api/auth/logout` | Logout user | Yes |
-| GET | `/api/auth/users` | List all users | Admin |
-| POST | `/api/auth/users` | Create user | Admin |
-| PUT | `/api/auth/users/{id}` | Update user | Admin |
-| DELETE | `/api/auth/users/{id}` | Delete user | Admin |
+| Method | Endpoint             | Description              | Auth Required |
+| ------ | -------------------- | ------------------------ | ------------- |
+| POST   | `/api/auth/register` | Register a new user      | No            |
+| POST   | `/api/auth/login`    | Login user (returns JWT) | No            |
+| GET    | `/api/auth/me`       | Get current user info    | Yes           |
+| POST   | `/api/auth/refresh`  | Refresh access token     | Yes           |
+| POST   | `/api/auth/logout`   | Logout user              | Yes           |
 
-### Consultants (`/api/consultants`)
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/consultants` | List consultants | Yes |
-| GET | `/api/consultants/{id}` | Get consultant profile | Yes |
-| POST | `/api/consultants` | Create consultant profile | Consultant |
-| PUT | `/api/consultants/{id}` | Update consultant profile | Consultant/Owner |
-| DELETE | `/api/consultants/{id}` | Delete consultant profile | Consultant/Owner |
-| POST | `/api/consultants/{id}/resume` | Upload resume | Consultant/Owner |
-| GET | `/api/consultants/{id}/resume` | Download resume | Yes |
-| GET | `/api/consultants/{id}/stats` | Get application statistics | Consultant/Owner |
+### Users(Admin only) (`/api/admin`)
+
+| Method | Endpoint                       | Description                                  | Auth Required |
+| ------ | ------------------------------ | -------------------------------------------- | ------------- |
+| GET    | `/api/admin/users`             | List all system users                        | Admin         |
+| POST   | `/api/admin/users`             | Create specific user (Recruiter / Candidate) | Admin         |
+| PUT    | `/api/admin/users/{id}/status` | Activate / Deactivate user                   | Admin         |
+| POST   | `/api/admin/assign`            | Assign Candidate to Recruiter                | Admin         |
+| PUT    | `/api/admin/reassign`          | Reassign Candidate to different Recruiter    | Admin         |
+| GET    | `/api/reports/system`          | Export Global System Report (CSV)            | Admin         |
+
+
+### Candidates (`/api/candidates`)
+
+| Method | Endpoint                       | Description                               | Auth Required |
+| ------ | ------------------------------ | ----------------------------------------- | ------------- |
+| PUT    | `/api/candidates/profile`      | Update profile (Visa, Experience, Skills) | Candidate     |
+| GET    | `/api/candidates/resumes`      | List uploaded resumes                     | Candidate     |
+| POST   | `/api/candidates/resumes`      | Upload resume (Max 2)                     | Candidate     |
+| DELETE | `/api/candidates/resumes/{id}` | Delete a resume                           | Candidate     |
+| POST   | `/api/candidates/ai-resume`    | Generate / Improve Resume with AI         | Candidate     |
+| GET    | `/api/candidates/stats`        | Get application tracking stats            | Candidate     |
+
+
 
 ### Recruiters (`/api/recruiters`)
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/recruiters` | List recruiters | Yes |
-| GET | `/api/recruiters/{id}` | Get recruiter profile | Yes |
-| POST | `/api/recruiters` | Create recruiter profile | Recruiter |
-| PUT | `/api/recruiters/{id}` | Update recruiter profile | Recruiter/Owner |
-| DELETE | `/api/recruiters/{id}` | Delete recruiter profile | Recruiter/Owner |
+| Method | Endpoint                        | Description                             | Auth Required |
+| ------ | ------------------------------- | --------------------------------------- | ------------- |
+| GET    | `/api/recruiters/my-candidates` | List only assigned candidates           | Recruiter     |
+| GET    | `/api/recruiters/dashboard`     | Get dashboard stats (assigned / active) | Recruiter     |
+| GET    | `/api/reports/recruiter`        | Export Recruiter Report (CSV)           | Recruiter     |
+
+
 
 ### Jobs (`/api/jobs`)
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/jobs` | List jobs | Yes |
-| GET | `/api/jobs/{id}` | Get job details | Yes |
-| POST | `/api/jobs` | Create job | Recruiter/Admin |
-| PUT | `/api/jobs/{id}` | Update job | Recruiter/Admin |
-| DELETE | `/api/jobs/{id}` | Delete job | Recruiter/Admin |
+| Method | Endpoint         | Description        | Auth Required     |
+| ------ | ---------------- | ------------------ | ----------------- |
+| GET    | `/api/jobs`      | List all open jobs | Yes               |
+| GET    | `/api/jobs/{id}` | Get job details    | Yes               |
+| POST   | `/api/jobs`      | Post a new job     | Recruiter / Admin |
+| PUT    | `/api/jobs/{id}` | Edit job details   | Recruiter / Admin |
+| DELETE | `/api/jobs/{id}` | Close / Delete job | Recruiter / Admin |
+
+
 
 ### Submissions (`/api/submissions`)
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/submissions` | List submissions | Yes |
-| GET | `/api/submissions/{id}` | Get submission details | Yes |
-| POST | `/api/submissions` | Create submission | Consultant |
-| PUT | `/api/submissions/{id}` | Update submission | Consultant/Owner |
-| DELETE | `/api/submissions/{id}` | Delete submission | Consultant/Owner |
-| PUT | `/api/submissions/{id}/status` | Update submission status | Recruiter/Admin |
+| Method | Endpoint                           | Description                                       | Auth Required |
+| ------ | ---------------------------------- | ------------------------------------------------- | ------------- |
+| POST   | `/api/submissions/apply`           | Apply to job (Select Resume)                      | Candidate     |
+| GET    | `/api/submissions/my-applications` | Track status (Applied / Interview / Offer / etc.) | Candidate     |
+| GET    | `/api/submissions/job/{id}`        | View applicants for a specific job                | Recruiter     |
+| PUT    | `/api/submissions/{id}/stage`      | Update stage (Interview / Offer / Reject)         | Recruiter     |
+| PUT    | `/api/submissions/{id}/remarks`    | Add notes / remarks to application                | Recruiter     |
 
-### Health & Info
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | API information | No |
-| GET | `/health` | Health check | No |
 
----
 
-## 🔐 Authentication
 
-### Register a User
 
-```bash
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "name": "John Doe",
-  "password": "password123",
-  "role": "CONSULTANT"
-}
-```
-
-**Roles**: `ADMIN`, `RECRUITER`, `CONSULTANT`
-
-### Login
-
-```bash
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-**Response:**
-```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer"
-}
-```
-
-### Using the Token
-
-Include the token in the `Authorization` header:
-
-```bash
-Authorization: Bearer <access_token>
-```
-
----
-
-## ⚙️ Environment Variables
-
-### Backend
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MONGODB_URL` | MongoDB connection string | `mongodb://localhost:27017` |
-| `DATABASE_NAME` | Database name | `consultant_tracker` |
-| `SECRET_KEY` | JWT secret key | `your-secret-key-change-this-in-production` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration (minutes) | `30` |
-| `CORS_ORIGINS` | Comma-separated allowed origins | `http://localhost:3000,http://localhost:3001` |
-| `API_PREFIX` | API route prefix | `/api` |
-
-### Frontend
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `REACT_APP_API_URL` | Backend API URL | `http://localhost:8000/api` |
-
----
-
-## 📊 Database Schema
-
-### Collections
-
-**User Collections:**
-- `admins` - Admin user accounts
-- `consultants` - Consultant user accounts
-- `recruiters` - Recruiter user accounts
-
-**Profile Collections:**
-- `consultant_profiles` - Consultant professional profiles
-- `recruiter_profiles` - Recruiter profiles
-
-**Business Collections:**
-- `job_descriptions` - Job postings
-- `submissions` - Job applications
-
-### Indexes
-
-Each collection has optimized indexes:
-- User collections: `email` (unique), `is_active`
-- Profile collections: `user_id` (unique), `email`
-- Business collections: Various indexes for query optimization
-
----
-
-## 🧪 Testing
-
-### Backend Tests
-
-```bash
-cd backend
-pytest tests/
-```
-
-### Manual Testing
-
-1. **Register a user:**
-   - Navigate to `http://localhost:3000/register`
-   - Fill in the form and select a role
-   - Submit to create an account
-
-2. **Login:**
-   - Navigate to `http://localhost:3000/login`
-   - Enter your email and password
-   - You'll be redirected to the dashboard
-
-3. **API Testing:**
-   - Use Swagger UI at `http://localhost:8000/docs`
-   - Or use tools like Postman/Insomnia
-
-For detailed test cases, see [TEST_CASES.md](./TEST_CASES.md).
-
----
-
-## 📝 Password Requirements
-
-- **Minimum**: 6 characters
-- **Maximum**: 72 bytes (bcrypt limitation)
-- For ASCII characters, this is approximately 72 characters
-- Special characters or emojis use multiple bytes per character
-
----
-
-## 📚 Documentation
-
-- **[CODEBASE_STRUCTURE.md](./CODEBASE_STRUCTURE.md)** - Detailed architecture documentation
-- **[TEST_CASES.md](./TEST_CASES.md)** - Test cases and scenarios
-- **API Documentation**: Available at `http://localhost:8000/docs` (Swagger UI)
-
----
-
-## 🏗 Adding New Modules
-
-The application uses a modular architecture. To add a new module:
-
-1. Create module directory: `app/modules/my_module/`
-2. Implement `BaseModule` interface
-3. Create router, repository, models, and schema
-4. Register module in `__init__.py`
-5. Import module in `main.py`
-
-For detailed instructions, see [CODEBASE_STRUCTURE.md](./CODEBASE_STRUCTURE.md#adding-new-modules).
-
----
-
-## 🔧 Development
-
-### Logging
-
-Logs are stored in `backend/logs/`:
-- `app.log` - General application logs
-- `errors.log` - Error logs only
-- `access.log` - API access logs
-
-### File Uploads
-
-Uploaded files (resumes) are stored in `backend/uploads/`.
-
-### Code Structure
-
-- **Core**: Shared infrastructure in `app/core/`
-- **Modules**: Business logic in `app/modules/`
-- **Repository Pattern**: Data access abstraction
-- **Dependency Injection**: FastAPI's dependency system
-
----
-
-## 🚨 Troubleshooting
-
-### Backend Issues
-
-**Database Connection Error:**
-- Ensure MongoDB is running
-- Check `MONGODB_URL` environment variable
-- Verify network connectivity
-
-**Import Errors:**
-- Ensure virtual environment is activated
-- Reinstall dependencies: `pip install -r requirements.txt`
-- Check Python version (3.8+)
-
-**Port Already in Use:**
-- Change port: `uvicorn app.main:app --port 8001`
-- Or stop the process using port 8000
-
-### Frontend Issues
-
-**API Connection Error:**
-- Verify backend is running on port 8000
-- Check `REACT_APP_API_URL` in `src/config.js`
-- Check CORS configuration in backend
-
-**Module Not Found:**
-- Run `npm install` to install dependencies
-- Clear cache: `npm start -- --reset-cache`
-
----
-
-## 📄 License
-
-This project is private and proprietary.
-
----
-
-## 🤝 Contributing
-
-This is a private project. For questions or issues, contact the development team.
-
----
-
-## 📞 Support
-
-For issues or questions:
-1. Check the documentation in `CODEBASE_STRUCTURE.md`
-2. Review test cases in `TEST_CASES.md`
-3. Check API documentation at `/docs` endpoint
-
----
-
-**Built with ❤️ using FastAPI and React**

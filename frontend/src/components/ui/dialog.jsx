@@ -1,48 +1,43 @@
-import * as React from "react"
-import { X } from "lucide-react"
-import { cn } from "../../utils/cn"
+import React, { useEffect, useRef } from "react";
+import { X } from "lucide-react";
+import { cn } from "../../lib/utils";
 
-const Dialog = ({ open, onClose, children }) => {
-    if (!open) return null;
+const DialogContext = React.createContext({});
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black/50"
-                onClick={onClose}
-            />
+export const Dialog = ({ open, onOpenChange, children }) => (
+  <DialogContext.Provider value={{ open, onOpenChange }}>
+    {children}
+  </DialogContext.Provider>
+);
 
-            {/* Dialog */}
-            <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-                {children}
-            </div>
-        </div>
-    );
+export const DialogTrigger = ({ asChild, children }) => {
+  const { onOpenChange } = React.useContext(DialogContext);
+  return React.cloneElement(children, { onClick: () => onOpenChange(true) });
 };
 
-const DialogHeader = ({ children, className }) => (
-    <div className={cn("px-6 py-4 border-b border-slate-200", className)}>
+export const DialogContent = ({ className, children }) => {
+  const { open, onOpenChange } = React.useContext(DialogContext);
+  const ref = useRef(null);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div 
+        ref={ref}
+        className={cn("relative bg-white rounded-lg shadow-lg w-full max-w-lg p-6 animate-in fade-in zoom-in duration-200", className)}
+      >
+        <button 
+          onClick={() => onOpenChange(false)}
+          className="absolute right-4 top-4 text-slate-500 hover:text-slate-900"
+        >
+          <X className="h-4 w-4" />
+        </button>
         {children}
+      </div>
     </div>
-);
+  );
+};
 
-const DialogTitle = ({ children, className }) => (
-    <h2 className={cn("text-xl font-semibold text-slate-900", className)}>
-        {children}
-    </h2>
-);
-
-const DialogContent = ({ children, className }) => (
-    <div className={cn("px-6 py-4", className)}>
-        {children}
-    </div>
-);
-
-const DialogFooter = ({ children, className }) => (
-    <div className={cn("px-6 py-4 border-t border-slate-200 flex justify-end gap-3", className)}>
-        {children}
-    </div>
-);
-
-export { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter }
+export const DialogHeader = ({ children }) => <div className="mb-4 text-left">{children}</div>;
+export const DialogTitle = ({ children }) => <h2 className="text-lg font-semibold text-slate-900">{children}</h2>;
